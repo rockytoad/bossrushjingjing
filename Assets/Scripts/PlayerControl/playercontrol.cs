@@ -2,10 +2,6 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections;
 
-using UnityEngine;
-using UnityEngine.InputSystem;
-using System.Collections;
-
 public class PlayerController : MonoBehaviour
 {
     [Header("Movement")]
@@ -48,7 +44,45 @@ public class PlayerController : MonoBehaviour
         if (value.isPressed && !isDashing)
         {
             Debug.Log("โจมตี! (คลิกซ้ายทำงานแล้ว)");
+            if (value.isPressed && !isDashing)
+            {
+                // ใช้คำสั่ง switch เพื่อแยกการทำงานตามสีอาวุธ
+                switch (weaponType)
+                {
+                    case "sword":
+                        SwordAttack();
+                        break;
+                    case "magic":
+                        GunAttack();
+                        break;
+                    case "shield":
+                        ShieldAttack();
+                        break;
+                    default:
+                        Debug.Log("ยังไม่ได้เลือกอาวุธเลยนาย!");
+                        break;
+                }
+            }
         }
+    }
+    // 1. ฟังก์ชันฟันดาบ (สีแดง)
+    void SwordAttack()
+    {
+        Debug.Log("ฟันดาบยักษ์! (เน้นดาเมจรอบตัว)");
+        // เดี๋ยวเราจะใส่โค้ดเปิด-ปิด Collider ที่นี่
+    }
+
+    // 2. ฟังก์ชันยิงปืน (สีเขียว)
+    void GunAttack()
+    {
+        Debug.Log("ยิงปืนฉีดน้ำหวาน! (เน้นระยะไกล)");
+        // เดี๋ยวเราจะใส่โค้ด Instantiate กระสุนที่นี่
+    }
+
+    // 3. ฟังก์ชันแทงหอก (สีน้ำเงิน)
+    void ShieldAttack()
+    {
+        Debug.Log("โล่! (ข้างหน้า)");
     }
 
     void Update()
@@ -91,4 +125,42 @@ public class PlayerController : MonoBehaviour
             transform.LookAt(targetPoint);
         }
     }
+
+    [Header("Interact Settings")]
+    public float interactRange = 3f; // ระยะที่มือเอื้อมถึง
+    public MeshRenderer handRenderer; // ช่องนี้เอาไว้ลาก "มือ" มาใส่ใน Inspector
+    public string weaponType = "None";
+
+    // ฟังก์ชันนี้จะทำงานเมื่อนายกดปุ่ม E (หรือปุ่มที่ตั้งไว้ใน Input Action)
+    public void OnInteract(InputValue value)
+    {
+        if (value.isPressed)
+        {
+            // 1. ตรวจสอบวัตถุรอบตัวในระยะ interactRange
+            Collider[] hitColliders = Physics.OverlapSphere(transform.position, interactRange);
+
+            foreach (var hitCollider in hitColliders)
+            {
+                // 2. ถ้าเจอของที่มี Tag ว่า WeaponSelector
+                if (hitCollider.CompareTag("WeaponSelector"))
+                {
+                    // 3. หยิบอาวุธและเปลี่ยนสีมือ
+                    weaponType = hitCollider.gameObject.name;
+                    handRenderer.material = hitCollider.GetComponent<MeshRenderer>().material;
+
+                    Debug.Log("หยิบอาวุธสำเร็จ! ตอนนี้ใช้: " + weaponType);
+                    break; // หยิบได้ทีละชิ้นพอ
+                }
+            }
+            
+        }
+        if (value.isPressed)
+        {
+            Debug.Log("กดปุ่ม E แล้วนะ!"); // ถ้ากดแล้วอันนี้ไม่ขึ้น แสดงว่าเป็นที่ Input Action
+
+            // โค้ด OverlapSphere เดิมของนาย...
+        }
+
+    }
+  
 }
