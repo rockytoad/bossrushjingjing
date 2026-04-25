@@ -2,6 +2,10 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections;
 
+using UnityEngine;
+using UnityEngine.InputSystem;
+using System.Collections;
+
 public class PlayerController : MonoBehaviour
 {
     [Header("Movement")]
@@ -22,12 +26,14 @@ public class PlayerController : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         mainCamera = Camera.main;
+        // ป้องกันไม่ให้ตัวละครล้ม
         rb.freezeRotation = true;
     }
 
+    // รับค่าเดิน WASD
     public void OnMove(InputValue value) => moveInput = value.Get<Vector2>();
 
-    // ฟังก์ชันนี้จะทำงานเมื่อกดปุ่ม Space (ที่เราตั้งชื่อว่า Dash)
+    // รับค่าปุ่ม Dash (Space)
     public void OnDash(InputValue value)
     {
         if (canDash && !isDashing)
@@ -36,15 +42,24 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    // รับค่าปุ่ม Attack (คลิกซ้าย) ที่นายเพิ่งตั้งค่าไป!
+    public void OnAttack(InputValue value)
+    {
+        if (value.isPressed && !isDashing)
+        {
+            Debug.Log("โจมตี! (คลิกซ้ายทำงานแล้ว)");
+        }
+    }
+
     void Update()
     {
-        if (isDashing) return; // ถ้ากำลังแดชอยู่ ไม่ต้องหันตามเมาส์
+        if (isDashing) return;
         LookAtMouse();
     }
 
     void FixedUpdate()
     {
-        if (isDashing) return; // ถ้ากำลังแดชอยู่ ไม่ต้องคุมเดินปกติ
+        if (isDashing) return;
 
         Vector3 moveDir = new Vector3(moveInput.x, 0, moveInput.y).normalized;
         rb.linearVelocity = moveDir * moveSpeed;
@@ -55,16 +70,13 @@ public class PlayerController : MonoBehaviour
         canDash = false;
         isDashing = true;
 
-        // ทิศทางที่แดช: พุ่งไปข้างหน้า (ที่ตัวละครหันไปหาเมาส์)
         Vector3 dashDir = transform.forward;
-
         rb.linearVelocity = dashDir * dashSpeed;
 
         yield return new WaitForSeconds(dashDuration);
 
         isDashing = false;
 
-        // รอ Cooldown
         yield return new WaitForSeconds(dashCooldown);
         canDash = true;
     }
