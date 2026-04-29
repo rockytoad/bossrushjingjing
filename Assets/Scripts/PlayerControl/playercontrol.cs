@@ -48,7 +48,7 @@ public class PlayerController : MonoBehaviour
         {
             // 3. เรียกใช้งานข้ามไฟล์ได้เลย! 
             // เหมือนสั่งว่า "เฮ้ เล่ม Combat ทำงานส่วนโจมตีซิ"
-            playerCombat.Attack();
+            playerCombat.OnLightAttack();
         }
     }
     void Update()

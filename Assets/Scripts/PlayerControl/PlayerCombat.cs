@@ -1,26 +1,92 @@
 using UnityEngine;
+using System.Collections;
 
 public class PlayerCombat : MonoBehaviour
 {
     private Weaponmanager weaponManager;
 
+    [Header("Sword Combo")]
+    public int comboStep = 0;
+    public float comboResetDelay = 1.0f;
+    private float lastComboTime;
+    public Collider swordCollider;
+    public float attackDuration = 0.3f;
+
+    [Header("Magic Settings")]
+    public GameObject magicBulletPrefab;
+    public Transform firePoint;
+    public float bulletSpeed = 20f;
+
+    [Header("Shield Settings")]
+    public bool isBlocking = false;
+    public GameObject shieldModel;
+
     void Start()
     {
-        // ดึงสคริปต์ Manager มาใช้งาน
         weaponManager = GetComponent<Weaponmanager>();
     }
 
-    public void Attack()
+    // --- คลิกซ้าย ---
+    public void OnLightAttack()
     {
-        // เช็กอาวุธจาก Manager
-        string type = weaponManager.currentWeaponType;
+        string type = weaponManager.currentWeaponType.ToLower();
 
-        if (type.Contains("Red")) SwordAttack();
-        else if (type.Contains("Green")) GunAttack();
-        else if (type.Contains("Blue")) SpearAttack();
+        // เช็กทั้งชื่อสี และ ชื่ออาวุธ เพื่อกันเหนียว
+        if (type.Contains("sword") || type.Contains("red")) SwordCombo();
+        else if (type.Contains("magic") || type.Contains("green")) MagicShoot();
+        else if (type.Contains("shield") || type.Contains("blue")) ShieldBash();
     }
 
-    void SwordAttack() { Debug.Log("ฟันดาบ!"); }
-    void GunAttack() { Debug.Log("ยิงปืน!"); }
-    void SpearAttack() { Debug.Log("แทงหอก!"); }
+    // --- คลิกขวา ---
+    public void OnHeavyAttack()
+    {
+        string type = weaponManager.currentWeaponType.ToLower();
+        if (type.Contains("sword")) ChargedSlash();
+        else if (type.Contains("magic")) MagicExplosion();
+        else if (type.Contains("shield")) BlockAndParry();
+    }
+
+    // --- ปุ่ม R ---
+    public void OnSkill()
+    {
+        Debug.Log("กางอณาเขต");
+    }
+
+    // --- Logic ของแต่ละอาวุธ ---
+    void SwordCombo()
+    {
+        if (Time.time - lastComboTime > comboResetDelay) comboStep = 0;
+        comboStep++;
+        lastComboTime = Time.time;
+
+        Debug.Log("Sword Combo Stage: " + comboStep);
+        StartCoroutine(EnableSwordHitbox());
+
+        if (comboStep >= 3) comboStep = 0; // ครบ 3 ท่าแล้วเริ่มใหม่
+    }
+
+    IEnumerator EnableSwordHitbox()
+    {
+        if (swordCollider) swordCollider.enabled = true;
+        yield return new WaitForSeconds(attackDuration);
+        if (swordCollider) swordCollider.enabled = false;
+    }
+
+    void MagicShoot()
+    {
+        Debug.Log("ยิงเวทมนตร์!");
+        if (magicBulletPrefab && firePoint)
+        {
+            GameObject bullet = Instantiate(magicBulletPrefab, firePoint.position, firePoint.rotation);
+            Rigidbody rb = bullet.GetComponent<Rigidbody>();
+            if (rb) rb.linearVelocity = firePoint.forward * bulletSpeed;
+        }
+    }
+
+    void ShieldBash() { Debug.Log("เอาโล่กระแทก!"); }
+
+    // --- ท่าคลิกขวา (สร้างฟังก์ชันเปล่ารอไว้ก่อน จะได้ไม่ Error) ---
+    void ChargedSlash() { Debug.Log("ชาร์จฟัน!"); }
+    void MagicExplosion() { Debug.Log("เวทระเบิด!"); }
+    void BlockAndParry() { Debug.Log("ป้องกัน!"); }
 }
