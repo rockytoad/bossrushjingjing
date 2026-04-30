@@ -4,6 +4,7 @@ using System.Collections;
 public class PlayerCombat : MonoBehaviour
 {
     private Weaponmanager weaponManager;
+    private WeaponShooter weaponShooter;
 
     [Header("Sword Combo")]
     public int comboStep = 0;
@@ -24,6 +25,7 @@ public class PlayerCombat : MonoBehaviour
     void Start()
     {
         weaponManager = GetComponent<Weaponmanager>();
+        weaponShooter = GetComponent<WeaponShooter>();
     }
 
     // --- คลิกซ้าย ---
@@ -32,9 +34,9 @@ public class PlayerCombat : MonoBehaviour
         string type = weaponManager.currentWeaponType.ToLower();
 
         // เช็กทั้งชื่อสี และ ชื่ออาวุธ เพื่อกันเหนียว
-        if (type.Contains("sword") || type.Contains("red")) SwordCombo();
-        else if (type.Contains("magic") || type.Contains("green")) MagicShoot();
-        else if (type.Contains("shield") || type.Contains("blue")) ShieldBash();
+        if (type.Contains("sword")) SwordCombo();
+        else if (type.Contains("magic") ) MagicShoot();
+        else if (type.Contains("shield") ) ShieldBash();
     }
 
     // --- คลิกขวา ---
@@ -74,12 +76,9 @@ public class PlayerCombat : MonoBehaviour
 
     void MagicShoot()
     {
-        Debug.Log("ยิงเวทมนตร์!");
-        if (magicBulletPrefab && firePoint)
+        if (weaponShooter != null)
         {
-            GameObject bullet = Instantiate(magicBulletPrefab, firePoint.position, firePoint.rotation);
-            Rigidbody rb = bullet.GetComponent<Rigidbody>();
-            if (rb) rb.linearVelocity = firePoint.forward * bulletSpeed;
+            weaponShooter.Shoot();
         }
     }
 
