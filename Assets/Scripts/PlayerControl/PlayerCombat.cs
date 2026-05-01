@@ -13,19 +13,16 @@ public class PlayerCombat : MonoBehaviour
     public Collider swordCollider;
     public float attackDuration = 0.3f;
 
-    [Header("Magic Settings")]
-    public GameObject magicBulletPrefab;
-    public Transform firePoint;
-    public float bulletSpeed = 20f;
-
     [Header("Shield Settings")]
     public bool isBlocking = false;
     public GameObject shieldModel;
 
+    private CharacterStatus status;
     void Start()
     {
         weaponManager = GetComponent<Weaponmanager>();
         weaponShooter = GetComponent<WeaponShooter>();
+        status = GetComponent<CharacterStatus>();
     }
 
     // --- คลิกซ้าย ---
@@ -57,14 +54,23 @@ public class PlayerCombat : MonoBehaviour
     // --- Logic ของแต่ละอาวุธ ---
     void SwordCombo()
     {
-        if (Time.time - lastComboTime > comboResetDelay) comboStep = 0;
-        comboStep++;
-        lastComboTime = Time.time;
+        if (status.UseStamina(10f))
+        {
+            if (Time.time - lastComboTime > comboResetDelay) comboStep = 0;
+            comboStep++;
+            lastComboTime = Time.time;
 
-        Debug.Log("Sword Combo Stage: " + comboStep);
-        StartCoroutine(EnableSwordHitbox());
+            Debug.Log("Sword Combo Stage: " + comboStep);
+            StartCoroutine(EnableSwordHitbox());
 
-        if (comboStep >= 3) comboStep = 0; // ครบ 3 ท่าแล้วเริ่มใหม่
+            if (comboStep >= 3) comboStep = 0; // ครบ 3 ท่าแล้วเริ่มใหม่
+
+            Debug.Log("ฟันดาบ! เสีย Stamina");
+        }
+        else
+        {
+            Debug.Log("เหนื่อยเกินไป ฟันไม่ไหว!");
+        }
     }
 
     IEnumerator EnableSwordHitbox()
@@ -76,9 +82,17 @@ public class PlayerCombat : MonoBehaviour
 
     void MagicShoot()
     {
-        if (weaponShooter != null)
+        float manaCost = 10f; // ตั้งค่าใช้มานาต่อการยิง 1 นัด
+
+        if (status.currentMana >= manaCost)
         {
-            weaponShooter.Shoot();
+            status.currentMana -= manaCost; // หัก Mana
+            weaponShooter.Shoot(status.GetMagicDamage()); // ส่งดาเมจจาก Status ไปยิง
+            Debug.Log("ยิงเวท! Mana คงเหลือ: " + status.currentMana);
+        }
+        else
+        {
+            Debug.Log("Mana ไม่พอ! ยิงไม่ออก");
         }
     }
 

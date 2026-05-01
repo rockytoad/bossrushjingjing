@@ -7,7 +7,7 @@ public class WeaponShooter : MonoBehaviour
     public Transform firePoint;
     public float bulletSpeed = 20f;
 
-    public void Shoot()
+    public void Shoot(float damage)
     {
         if (bulletPrefab != null && firePoint != null)
         {

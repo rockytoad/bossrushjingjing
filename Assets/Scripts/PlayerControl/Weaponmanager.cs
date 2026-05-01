@@ -1,4 +1,4 @@
-using UnityEngine; // ต้องมีบรรทัดนี้เสมอ!
+using UnityEngine;
 
 public class Weaponmanager : MonoBehaviour
 {
