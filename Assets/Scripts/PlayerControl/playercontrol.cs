@@ -51,6 +51,21 @@ public class PlayerController : MonoBehaviour
             playerCombat.OnLightAttack();
         }
     }
+    public void OnHeavyAttack(InputValue value) // รับค่าจาก Action "HeavyAttack"
+    {
+        if (value.isPressed)
+        {
+            playerCombat.OnHeavyAttack(); // ส่งไปหาฟังก์ชัน OnHeavyAttack ใน PlayerCombat
+        }
+    }
+
+    public void OnSkill(InputValue value) // รับค่าจาก Action "Skill"
+    {
+        if (value.isPressed)
+        {
+            playerCombat.OnSkill(); // ส่งไปหาฟังก์ชัน OnSkill ใน PlayerCombat
+        }
+    }
     void Update()
     {
         if (isDashing) return;

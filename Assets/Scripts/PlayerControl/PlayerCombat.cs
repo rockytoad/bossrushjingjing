@@ -40,7 +40,7 @@ public class PlayerCombat : MonoBehaviour
     public void OnHeavyAttack()
     {
         string type = weaponManager.currentWeaponType.ToLower();
-        if (type.Contains("sword")) ChargedSlash();
+        if (type.Contains("sword")) StartCoroutine(ChargedSlash());
         else if (type.Contains("magic")) MagicExplosion();
         else if (type.Contains("shield")) BlockAndParry();
     }
@@ -48,7 +48,11 @@ public class PlayerCombat : MonoBehaviour
     // --- ปุ่ม R ---
     public void OnSkill()
     {
-        Debug.Log("กางอณาเขต");
+        string type = weaponManager.currentWeaponType.ToLower();
+
+        if (type.Contains("sword")) SwordAuraSkill(); // บัพดาเมจ
+        else if (type.Contains("magic")) MeteorSkill(); // อุกกาบาต
+        else if (type.Contains("shield")) ShieldStunSkill(); // สตั้น
     }
 
     // --- Logic ของแต่ละอาวุธ ---
@@ -95,11 +99,35 @@ public class PlayerCombat : MonoBehaviour
             Debug.Log("Mana ไม่พอ! ยิงไม่ออก");
         }
     }
+    // --- ส่วนของฟังก์ชัน Skill ---
+
+    void SwordAuraSkill()
+    {
+        Debug.Log("เปิดใช้งานดาบออร่า! เพิ่มดาเมจ 20%");
+        // โค้ดบัพดาเมจจะใส่ตรงนี้
+    }
+
+    void MeteorSkill()
+    {
+        Debug.Log("เรียกอุกกาบาต! ตู้มมม");
+        // โค้ดเรียก Prefab อุกกาบาตจะใส่ตรงนี้
+    }
+
+    void ShieldStunSkill()
+    {
+        Debug.Log("กระแทกโล่! ศัตรูติดมึน");
+        // โค้ดทำ Stun จะใส่ตรงนี้
+    }
 
     void ShieldBash() { Debug.Log("เอาโล่กระแทก!"); }
 
     // --- ท่าคลิกขวา (สร้างฟังก์ชันเปล่ารอไว้ก่อน จะได้ไม่ Error) ---
-    void ChargedSlash() { Debug.Log("ชาร์จฟัน!"); }
+    IEnumerator ChargedSlash() // เปลี่ยนจาก void เป็น IEnumerator
+    {
+        Debug.Log("เริ่มชาร์จ...");
+        yield return new WaitForSeconds(1f); // รอ 1 วินาที
+        Debug.Log("ฟันโช๊ะ!");
+    }
     void MagicExplosion() { Debug.Log("เวทระเบิด!"); }
     void BlockAndParry() { Debug.Log("ป้องกัน!"); }
 }
