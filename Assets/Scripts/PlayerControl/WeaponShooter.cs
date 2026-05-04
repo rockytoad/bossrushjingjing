@@ -9,22 +9,21 @@ public class WeaponShooter : MonoBehaviour
 
     public void Shoot(float damage)
     {
-        if (bulletPrefab != null && firePoint != null)
-        {
-            GameObject bullet = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
-            Rigidbody rb = bullet.GetComponent<Rigidbody>();
-
-            if (rb != null)
-            {
-                // ใช้ linearVelocity สำหรับ Unity เวอร์ชั่นใหม่ (2023+) 
-                // หรือเปลี่ยนเป็น .velocity ถ้าเป็นเวอร์ชั่นเก่า
-                rb.linearVelocity = firePoint.forward * bulletSpeed;
-            }
-            Debug.Log("ยิงกระสุนออกไปแล้ว!");
-        }
-        else
+        if (bulletPrefab == null || firePoint == null)
         {
             Debug.LogWarning("ลืมใส่ Prefab หรือ FirePoint หรือเปล่านาย!");
+            return;
         }
+
+        GameObject bullet = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
+
+        // ส่ง damage ไปให้ DamageDealer บนกระสุน
+        DamageDealer dd = bullet.GetComponent<DamageDealer>();
+        if (dd != null) dd.damage = damage;
+
+        Rigidbody rb = bullet.GetComponent<Rigidbody>();
+        if (rb != null) rb.linearVelocity = firePoint.forward * bulletSpeed;
+
+        Debug.Log("ยิงกระสุนออกไปแล้ว! Damage: " + damage);
     }
 }

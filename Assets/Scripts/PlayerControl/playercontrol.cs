@@ -4,9 +4,9 @@ using System.Collections;
 
 public class PlayerController : MonoBehaviour
 {
-    // 1. ประกาศชื่อสมุดที่เราจะเรียกใช้
     private Weaponmanager weaponManager;
     private PlayerCombat playerCombat;
+
     [Header("Movement")]
     public float moveSpeed = 6f;
 
@@ -16,60 +16,71 @@ public class PlayerController : MonoBehaviour
     public float dashCooldown = 1f;
     private bool isDashing;
     private bool canDash = true;
-
+    private float lastInputTime = 0f;
+    private float inputCooldown = 0.1f; // 100ms
     private Rigidbody rb;
     private Vector2 moveInput;
     private Camera mainCamera;
 
     void Start()
     {
-        // 2. สั่งให้มันไป "หยิบ" สคริปต์ที่แปะอยู่บนตัวละครเดียวกันมาเก็บไว้
         weaponManager = GetComponent<Weaponmanager>();
         playerCombat = GetComponent<PlayerCombat>();
         rb = GetComponent<Rigidbody>();
         mainCamera = Camera.main;
-        // ป้องกันไม่ให้ตัวละครล้ม
         rb.freezeRotation = true;
     }
+
     public void OnMove(InputValue value) => moveInput = value.Get<Vector2>();
 
-    // รับค่าปุ่ม Dash (Space)
     public void OnDash(InputValue value)
     {
         if (canDash && !isDashing)
-        {
             StartCoroutine(DashRoutine());
-        }
     }
 
     public void OnAttack(InputValue value)
     {
-        if (value.isPressed)
-        {
-            // 3. เรียกใช้งานข้ามไฟล์ได้เลย! 
-            // เหมือนสั่งว่า "เฮ้ เล่ม Combat ทำงานส่วนโจมตีซิ"
-            playerCombat.OnLightAttack();
-        }
+        if (!value.isPressed) return;
+        if (Time.unscaledTime - lastInputTime < inputCooldown) return;
+        lastInputTime = Time.unscaledTime;
+        playerCombat.OnLightAttack();
     }
-    public void OnHeavyAttack(InputValue value) // รับค่าจาก Action "HeavyAttack"
+
+    public void OnHeavyAttack(InputValue value)
     {
-        if (value.isPressed)
+        if (!value.isPressed) return;
+        if (Time.unscaledTime - lastInputTime < inputCooldown) return;
+        lastInputTime = Time.unscaledTime;
+        playerCombat.OnHeavyAttack();
+    }
+
+    public void OnSkill(InputValue value)
+    {
+        if (!value.isPressed) return;
+        if (Time.unscaledTime - lastInputTime < inputCooldown) return;
+        lastInputTime = Time.unscaledTime;
+        playerCombat.OnSkill();
+    }
+
+    public void OnInteract(InputValue value)
+    {
+        if (!value.isPressed) return;
+
+        Collider[] hitColliders = Physics.OverlapSphere(transform.position, 3f);
+        foreach (Collider hitCollider in hitColliders)
         {
-            playerCombat.OnHeavyAttack(); // ส่งไปหาฟังก์ชัน OnHeavyAttack ใน PlayerCombat
+            if (hitCollider.CompareTag("WeaponSelector"))
+            {
+                weaponManager.SwitchWeapon(hitCollider.gameObject.name);
+                break;
+            }
         }
     }
 
-    public void OnSkill(InputValue value) // รับค่าจาก Action "Skill"
-    {
-        if (value.isPressed)
-        {
-            playerCombat.OnSkill(); // ส่งไปหาฟังก์ชัน OnSkill ใน PlayerCombat
-        }
-    }
     void Update()
     {
-        if (isDashing) return;
-        LookAtMouse();
+        if (!isDashing) LookAtMouse();
     }
 
     void FixedUpdate()
@@ -79,49 +90,28 @@ public class PlayerController : MonoBehaviour
         Vector3 moveDir = new Vector3(moveInput.x, 0, moveInput.y).normalized;
         rb.linearVelocity = moveDir * moveSpeed;
     }
+
     IEnumerator DashRoutine()
     {
         canDash = false;
         isDashing = true;
 
-        Vector3 dashDir = transform.forward;
-        rb.linearVelocity = dashDir * dashSpeed;
-
+        rb.linearVelocity = transform.forward * dashSpeed;
         yield return new WaitForSeconds(dashDuration);
 
         isDashing = false;
-
         yield return new WaitForSeconds(dashCooldown);
+
         canDash = true;
     }
 
-    public void OnInteract(InputValue value)
-    {
-        if (value.isPressed)
-        {
-            // สร้างวงรัศมีตรวจจับ (อย่าลืมประกาศตัวแปรคลาส WeaponManager ไว้ที่ Start ด้วยนะ)
-            Collider[] hitColliders = Physics.OverlapSphere(transform.position, 3f);
-            foreach (Collider hitCollider in hitColliders) // ต้องมีคำว่า Collider นำหน้า
-            {
-                if (hitCollider.CompareTag("WeaponSelector"))
-                {
-                    // สั่งข้ามไฟล์ไปที่ Manager
-                    GetComponent<Weaponmanager>().SwitchWeapon(hitCollider.gameObject.name);
-                    break;
-                }
-            }
-        }
-    }
     void LookAtMouse()
     {
         Ray ray = mainCamera.ScreenPointToRay(Mouse.current.position.ReadValue());
         if (Physics.Raycast(ray, out RaycastHit hit))
         {
-            Vector3 targetPoint = hit.point;
-            targetPoint.y = transform.position.y;
+            Vector3 targetPoint = new Vector3(hit.point.x, transform.position.y, hit.point.z);
             transform.LookAt(targetPoint);
         }
     }
-
-
 }

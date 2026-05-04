@@ -5,6 +5,7 @@ public class PlayerCombat : MonoBehaviour
 {
     private Weaponmanager weaponManager;
     private WeaponShooter weaponShooter;
+    private CharacterStatus status;
 
     [Header("Sword Combo")]
     public int comboStep = 0;
@@ -17,7 +18,10 @@ public class PlayerCombat : MonoBehaviour
     public bool isBlocking = false;
     public GameObject shieldModel;
 
-    private CharacterStatus status;
+    private bool isAttacking = false;
+    private float lastActionTime = -1f;
+    private float actionCooldown = 0.2f; // กัน trigger ซ้ำในช่วง 200ms
+
     void Start()
     {
         weaponManager = GetComponent<Weaponmanager>();
@@ -25,56 +29,57 @@ public class PlayerCombat : MonoBehaviour
         status = GetComponent<CharacterStatus>();
     }
 
-    // --- คลิกซ้าย ---
-    public void OnLightAttack()
+    bool CanAct()
     {
-        string type = weaponManager.currentWeaponType.ToLower();
-
-        // เช็กทั้งชื่อสี และ ชื่ออาวุธ เพื่อกันเหนียว
-        if (type.Contains("sword")) SwordCombo();
-        else if (type.Contains("magic") ) MagicShoot();
-        else if (type.Contains("shield") ) ShieldBash();
+        if (Time.unscaledTime - lastActionTime < actionCooldown) return false;
+        lastActionTime = Time.unscaledTime;
+        return true;
     }
 
-    // --- คลิกขวา ---
+    public void OnLightAttack()
+    {
+        if (!CanAct()) return;
+        string type = weaponManager.currentWeaponType.ToLower();
+        if (type.Contains("sword")) SwordCombo();
+        else if (type.Contains("magic")) MagicShoot();
+        else if (type.Contains("shield")) ShieldBash();
+    }
+
     public void OnHeavyAttack()
     {
+        if (!CanAct()) return;
         string type = weaponManager.currentWeaponType.ToLower();
         if (type.Contains("sword")) StartCoroutine(ChargedSlash());
         else if (type.Contains("magic")) MagicExplosion();
         else if (type.Contains("shield")) BlockAndParry();
     }
 
-    // --- ปุ่ม R ---
     public void OnSkill()
     {
+        if (!CanAct()) return;
         string type = weaponManager.currentWeaponType.ToLower();
-
-        if (type.Contains("sword")) SwordAuraSkill(); // บัพดาเมจ
-        else if (type.Contains("magic")) MeteorSkill(); // อุกกาบาต
-        else if (type.Contains("shield")) ShieldStunSkill(); // สตั้น
+        if (type.Contains("sword")) SwordAuraSkill();
+        else if (type.Contains("magic")) MeteorSkill();
+        else if (type.Contains("shield")) ShieldStunSkill();
     }
 
-    // --- Logic ของแต่ละอาวุธ ---
+    // --- Sword ---
     void SwordCombo()
     {
-        if (status.UseStamina(10f))
-        {
-            if (Time.time - lastComboTime > comboResetDelay) comboStep = 0;
-            comboStep++;
-            lastComboTime = Time.time;
-
-            Debug.Log("Sword Combo Stage: " + comboStep);
-            StartCoroutine(EnableSwordHitbox());
-
-            if (comboStep >= 3) comboStep = 0; // ครบ 3 ท่าแล้วเริ่มใหม่
-
-            Debug.Log("ฟันดาบ! เสีย Stamina");
-        }
-        else
+        if (!status.UseStamina(10f))
         {
             Debug.Log("เหนื่อยเกินไป ฟันไม่ไหว!");
+            return;
         }
+
+        if (Time.time - lastComboTime > comboResetDelay) comboStep = 0;
+
+        comboStep++;
+        lastComboTime = Time.time;
+        StartCoroutine(EnableSwordHitbox());
+        Debug.Log("Sword Combo Stage: " + comboStep);
+
+        if (comboStep >= 3) comboStep = 0;
     }
 
     IEnumerator EnableSwordHitbox()
@@ -84,50 +89,41 @@ public class PlayerCombat : MonoBehaviour
         if (swordCollider) swordCollider.enabled = false;
     }
 
-    void MagicShoot()
+    IEnumerator ChargedSlash()
     {
-        float manaCost = 10f; // ตั้งค่าใช้มานาต่อการยิง 1 นัด
-
-        if (status.currentMana >= manaCost)
-        {
-            status.currentMana -= manaCost; // หัก Mana
-            weaponShooter.Shoot(status.GetMagicDamage()); // ส่งดาเมจจาก Status ไปยิง
-            Debug.Log("ยิงเวท! Mana คงเหลือ: " + status.currentMana);
-        }
-        else
-        {
-            Debug.Log("Mana ไม่พอ! ยิงไม่ออก");
-        }
+        
+        Debug.Log("เริ่มชาร์จ...");
+        yield return new WaitForSeconds(1f);
+        Debug.Log("ฟันโช๊ะ!");
+       
     }
-    // --- ส่วนของฟังก์ชัน Skill ---
 
     void SwordAuraSkill()
     {
         Debug.Log("เปิดใช้งานดาบออร่า! เพิ่มดาเมจ 20%");
-        // โค้ดบัพดาเมจจะใส่ตรงนี้
     }
 
-    void MeteorSkill()
+    // --- Magic ---
+    void MagicShoot()
     {
-        Debug.Log("เรียกอุกกาบาต! ตู้มมม");
-        // โค้ดเรียก Prefab อุกกาบาตจะใส่ตรงนี้
+        if (!status.UseMana(10f))
+        {
+            Debug.Log("Mana ไม่พอ! ยิงไม่ออก");
+            return;
+        }
+
+        weaponShooter.Shoot(status.GetMagicDamage());
+        Debug.Log("ยิงเวท! Mana คงเหลือ: " + status.currentMana);
     }
 
-    void ShieldStunSkill()
-    {
-        Debug.Log("กระแทกโล่! ศัตรูติดมึน");
-        // โค้ดทำ Stun จะใส่ตรงนี้
-    }
+    void MagicExplosion() { Debug.Log("เวทระเบิด!"); }
 
+    void MeteorSkill() { Debug.Log("เรียกอุกกาบาต! ตู้มมม"); }
+
+    // --- Shield ---
     void ShieldBash() { Debug.Log("เอาโล่กระแทก!"); }
 
-    // --- ท่าคลิกขวา (สร้างฟังก์ชันเปล่ารอไว้ก่อน จะได้ไม่ Error) ---
-    IEnumerator ChargedSlash() // เปลี่ยนจาก void เป็น IEnumerator
-    {
-        Debug.Log("เริ่มชาร์จ...");
-        yield return new WaitForSeconds(1f); // รอ 1 วินาที
-        Debug.Log("ฟันโช๊ะ!");
-    }
-    void MagicExplosion() { Debug.Log("เวทระเบิด!"); }
     void BlockAndParry() { Debug.Log("ป้องกัน!"); }
+
+    void ShieldStunSkill() { Debug.Log("กระแทกโล่! ศัตรูติดมึน"); }
 }

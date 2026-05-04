@@ -18,9 +18,10 @@ public class Weaponmanager : MonoBehaviour
         if (gunObject) gunObject.SetActive(false);
         if (shieldObject) shieldObject.SetActive(false);
 
-        // เปิดตามชื่อ (เปลี่ยนคำใน "" ให้ตรงกับชื่อก้อนสีของนายนะ)
-        if (weaponName.Contains("sword")) swordObject.SetActive(true);
-        else if (weaponName.Contains("magic")) gunObject.SetActive(true);
-        else if (weaponName.Contains("shield")) shieldObject.SetActive(true);
+        // เปิดตามชื่อ พร้อม null check
+        if (weaponName.Contains("sword") && swordObject) swordObject.SetActive(true);
+        else if (weaponName.Contains("magic") && gunObject) gunObject.SetActive(true);
+        else if (weaponName.Contains("shield") && shieldObject) shieldObject.SetActive(true);
+        else Debug.LogWarning("ไม่พบอาวุธชื่อ: " + weaponName);
     }
 }

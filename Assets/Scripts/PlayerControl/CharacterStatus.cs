@@ -2,16 +2,16 @@ using UnityEngine;
 
 public class CharacterStatus : MonoBehaviour
 {
-    [Header("Health System")]
+    [Header("Health")]
     public float maxHp = 100f;
     public float currentHp;
 
-    [Header("Mana System")]
+    [Header("Mana")]
     public float maxMana = 50f;
     public float currentMana;
     public float manaRegenRate = 10f;
 
-    [Header("Stamina System")]
+    [Header("Stamina")]
     public float maxStamina = 100f;
     public float currentStamina;
     public float staminaRegenRate = 10f;
@@ -19,11 +19,9 @@ public class CharacterStatus : MonoBehaviour
     [Header("Combat Stats")]
     public float swordDamage = 15f;
     public float magicDamage = 20f;
-    
 
     void Awake()
     {
-        // ตั้งค่าเริ่มต้นให้เต็มถังตอนเริ่มเกม
         currentHp = maxHp;
         currentMana = maxMana;
         currentStamina = maxStamina;
@@ -31,43 +29,34 @@ public class CharacterStatus : MonoBehaviour
 
     void Update()
     {
-        // ฟื้นฟู Stamina อัตโนมัติ (เหมือนเกมแนว Souls/Hades)
         if (currentStamina < maxStamina)
-        {
-            currentStamina += staminaRegenRate * Time.deltaTime;
-            currentStamina = Mathf.Clamp(currentStamina, 0, maxStamina);
+            currentStamina = Mathf.Clamp(currentStamina + staminaRegenRate * Time.deltaTime, 0, maxStamina);
 
-        }
         if (currentMana < maxMana)
-        {
-            currentMana += manaRegenRate * Time.deltaTime;
-            currentMana = Mathf.Clamp(currentMana, 0, maxMana);
-        }
+            currentMana = Mathf.Clamp(currentMana + manaRegenRate * Time.deltaTime, 0, maxMana);
     }
 
-    // --- ฟังก์ชันดึงค่าดาเมจ (เอาไปใช้ใน BulletScript หรือ PlayerCombat) ---
-    public float GetMagicDamage() => magicDamage;
     public float GetSwordDamage() => swordDamage;
+    public float GetMagicDamage() => magicDamage;
 
-    // --- ฟังก์ชันจัดการทรัพยากร ---
     public void TakeDamage(float amount)
     {
-        currentHp -= amount;
+        currentHp = Mathf.Clamp(currentHp - amount, 0, maxHp);
         if (currentHp <= 0) Debug.Log("Player Dead!");
     }
 
     public bool UseStamina(float amount)
     {
-        if (currentStamina >= amount)
-        {
-            currentStamina -= amount;
-            return true; // Stamina พอ
-        }
-        return false; // Stamina ไม่พอ
+        if (currentStamina < amount) return false;
+        currentStamina -= amount;
+        return true;
     }
 
-    public void CardValueAdjust(int value)
+    // เพิ่ม UseMana ให้ consistent กับ UseStamina
+    public bool UseMana(float amount)
     {
-        Debug.Log("Adjusting Card Value by: " + value);
+        if (currentMana < amount) return false;
+        currentMana -= amount;
+        return true;
     }
 }
