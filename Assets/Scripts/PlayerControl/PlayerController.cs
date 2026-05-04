@@ -16,8 +16,7 @@ public class PlayerController : MonoBehaviour
     public float dashCooldown = 1f;
     private bool isDashing;
     private bool canDash = true;
-    private float lastInputTime = 0f;
-    private float inputCooldown = 0.1f; // 100ms
+
     private Rigidbody rb;
     private Vector2 moveInput;
     private Camera mainCamera;
@@ -41,26 +40,27 @@ public class PlayerController : MonoBehaviour
 
     public void OnAttack(InputValue value)
     {
-        if (!value.isPressed) return;
-        if (Time.unscaledTime - lastInputTime < inputCooldown) return;
-        lastInputTime = Time.unscaledTime;
-        playerCombat.OnLightAttack();
+        if (value.Get<float>() > 0.5f)
+            playerCombat.OnLightAttack();
     }
 
     public void OnHeavyAttack(InputValue value)
     {
-        if (!value.isPressed) return;
-        if (Time.unscaledTime - lastInputTime < inputCooldown) return;
-        lastInputTime = Time.unscaledTime;
-        playerCombat.OnHeavyAttack();
+        if (value.Get<float>() > 0.5f)
+        {
+            playerCombat.OnHeavyAttack();         // กด → ดาบ/เวทย์ทำงาน
+            playerCombat.OnHeavyAttackHeld();     // กด → โล่เริ่มป้องกัน
+        }
+        else
+        {
+            playerCombat.OnHeavyAttackReleased(); // ปล่อย → โล่หยุดป้องกัน
+        }
     }
 
     public void OnSkill(InputValue value)
     {
-        if (!value.isPressed) return;
-        if (Time.unscaledTime - lastInputTime < inputCooldown) return;
-        lastInputTime = Time.unscaledTime;
-        playerCombat.OnSkill();
+        if (value.Get<float>() > 0.5f)
+            playerCombat.OnSkill();
     }
 
     public void OnInteract(InputValue value)

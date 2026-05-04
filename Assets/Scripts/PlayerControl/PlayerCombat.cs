@@ -18,9 +18,16 @@ public class PlayerCombat : MonoBehaviour
     public bool isBlocking = false;
     public GameObject shieldModel;
 
-    private bool isAttacking = false;
+    [Header("Resource Costs")]
+    public float chargedSlashStaminaCost = 30f;
+    public float blockStaminaDrainRate = 15f; // Stamina ต่อวินาทีขณะกดค้าง
+    public float magicExplosionManaCost = 25f;
+    public float swordSkillManaCost = 20f;
+    public float meteorSkillManaCost = 40f;
+    public float shieldSkillManaCost = 20f;
+
     private float lastActionTime = -1f;
-    private float actionCooldown = 0.2f; // กัน trigger ซ้ำในช่วง 200ms
+    private float actionCooldown = 0.2f;
 
     void Start()
     {
@@ -42,7 +49,7 @@ public class PlayerCombat : MonoBehaviour
         string type = weaponManager.currentWeaponType.ToLower();
         if (type.Contains("sword")) SwordCombo();
         else if (type.Contains("magic")) MagicShoot();
-        else if (type.Contains("shield")) ShieldBash();
+        else if (type.Contains("shield")) ShieldCombo(); // คอมโบเหมือนดาบ
     }
 
     public void OnHeavyAttack()
@@ -51,7 +58,21 @@ public class PlayerCombat : MonoBehaviour
         string type = weaponManager.currentWeaponType.ToLower();
         if (type.Contains("sword")) StartCoroutine(ChargedSlash());
         else if (type.Contains("magic")) MagicExplosion();
-        else if (type.Contains("shield")) BlockAndParry();
+        // โล่จัดการผ่าน OnHeavyAttackHeld/Released แทน
+    }
+
+    // เรียกจาก PlayerController ตอนกดค้าง
+    public void OnHeavyAttackHeld()
+    {
+        string type = weaponManager.currentWeaponType.ToLower();
+        if (type.Contains("shield")) StartBlocking();
+    }
+
+    // เรียกจาก PlayerController ตอนปล่อย
+    public void OnHeavyAttackReleased()
+    {
+        string type = weaponManager.currentWeaponType.ToLower();
+        if (type.Contains("shield")) StopBlocking();
     }
 
     public void OnSkill()
@@ -73,12 +94,10 @@ public class PlayerCombat : MonoBehaviour
         }
 
         if (Time.time - lastComboTime > comboResetDelay) comboStep = 0;
-
         comboStep++;
         lastComboTime = Time.time;
         StartCoroutine(EnableSwordHitbox());
         Debug.Log("Sword Combo Stage: " + comboStep);
-
         if (comboStep >= 3) comboStep = 0;
     }
 
@@ -91,16 +110,24 @@ public class PlayerCombat : MonoBehaviour
 
     IEnumerator ChargedSlash()
     {
-        
-        Debug.Log("เริ่มชาร์จ...");
+        if (!status.UseStamina(chargedSlashStaminaCost))
+        {
+            Debug.Log("Stamina ไม่พอ! ชาร์จไม่ได้!");
+            yield break;
+        }
+        Debug.Log("เริ่มชาร์จ... เสีย Stamina " + chargedSlashStaminaCost);
         yield return new WaitForSeconds(1f);
         Debug.Log("ฟันโช๊ะ!");
-       
     }
 
     void SwordAuraSkill()
     {
-        Debug.Log("เปิดใช้งานดาบออร่า! เพิ่มดาเมจ 20%");
+        if (!status.UseMana(swordSkillManaCost))
+        {
+            Debug.Log("Mana ไม่พอ! ใช้สกิลไม่ได้!");
+            return;
+        }
+        Debug.Log("เปิดใช้งานดาบออร่า! เพิ่มดาเมจ 20% เสีย Mana " + swordSkillManaCost);
     }
 
     // --- Magic ---
@@ -111,19 +138,99 @@ public class PlayerCombat : MonoBehaviour
             Debug.Log("Mana ไม่พอ! ยิงไม่ออก");
             return;
         }
-
         weaponShooter.Shoot(status.GetMagicDamage());
         Debug.Log("ยิงเวท! Mana คงเหลือ: " + status.currentMana);
     }
 
-    void MagicExplosion() { Debug.Log("เวทระเบิด!"); }
+    void MagicExplosion()
+    {
+        if (!status.UseMana(magicExplosionManaCost))
+        {
+            Debug.Log("Mana ไม่พอ! ระเบิดไม่ออก!");
+            return;
+        }
+        Debug.Log("เวทระเบิด! เสีย Mana " + magicExplosionManaCost);
+    }
 
-    void MeteorSkill() { Debug.Log("เรียกอุกกาบาต! ตู้มมม"); }
+    void MeteorSkill()
+    {
+        if (!status.UseMana(meteorSkillManaCost))
+        {
+            Debug.Log("Mana ไม่พอ! เรียกอุกกาบาตไม่ได้!");
+            return;
+        }
+        Debug.Log("เรียกอุกกาบาต! ตู้มมม เสีย Mana " + meteorSkillManaCost);
+    }
 
     // --- Shield ---
-    void ShieldBash() { Debug.Log("เอาโล่กระแทก!"); }
+    void ShieldCombo()
+    {
+        if (!status.UseStamina(10f))
+        {
+            Debug.Log("เหนื่อยเกินไป กระแทกไม่ไหว! Stamina: " + status.currentStamina);
+            return;
+        }
 
-    void BlockAndParry() { Debug.Log("ป้องกัน!"); }
+        if (Time.time - lastComboTime > comboResetDelay) comboStep = 0;
+        comboStep++;
+        lastComboTime = Time.time;
+        Debug.Log("Shield Combo Stage: " + comboStep + " | Stamina คงเหลือ: " + status.currentStamina);
+        if (comboStep >= 3) comboStep = 0;
+    }
 
-    void ShieldStunSkill() { Debug.Log("กระแทกโล่! ศัตรูติดมึน"); }
+    void StartBlocking()
+    {
+        if (status.currentStamina <= 0)
+        {
+            Debug.Log("Stamina หมด! ป้องกันไม่ได้!");
+            return;
+        }
+        isBlocking = true;
+        if (shieldModel) shieldModel.SetActive(true);
+        Debug.Log("เริ่มป้องกัน... Stamina: " + status.currentStamina);
+    }
+
+    void StopBlocking()
+    {
+        isBlocking = false;
+        if (shieldModel) shieldModel.SetActive(false);
+
+        // เช็กเพิ่มตรงนี้
+        if (status.currentStamina <= 0)
+        {
+            Debug.Log("Stamina หมด! การป้องกันถูกยกเลิก");
+        }
+        else
+        {
+            Debug.Log("หยุดป้องกัน | Stamina คงเหลือ: " + status.currentStamina);
+        }
+    }
+
+    void Update()
+    {
+        // ลด Stamina เรื่อยๆ ขณะกดค้างป้องกัน
+        if (isBlocking)
+        {
+            if (status.currentStamina > 0)
+            {
+                status.currentStamina -= blockStaminaDrainRate * Time.deltaTime;
+                status.currentStamina = Mathf.Max(status.currentStamina, 0);
+            }
+            else
+            {
+                StopBlocking();
+                Debug.Log("Stamina หมด! หยุดป้องกันอัตโนมัติ");
+            }
+        }
+    }
+
+    void ShieldStunSkill()
+    {
+        if (!status.UseMana(shieldSkillManaCost))
+        {
+            Debug.Log("Mana ไม่พอ! ใช้สกิลไม่ได้!");
+            return;
+        }
+        Debug.Log("กระแทกโล่! ศัตรูติดมึน เสีย Mana " + shieldSkillManaCost);
+    }
 }
