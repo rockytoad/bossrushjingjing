@@ -214,7 +214,7 @@ public class PlayerCombat : MonoBehaviour
             if (status.currentStamina > 0)
             {
                 status.currentStamina -= blockStaminaDrainRate * Time.deltaTime;
-                status.currentStamina = Mathf.Max(status.currentStamina, 0);
+                
             }
             else
             {
