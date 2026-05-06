@@ -180,11 +180,15 @@ public class PlayerCombat : MonoBehaviour
 
     void StartBlocking()
     {
-        if (status.currentStamina <= 0)
+        // ถ้าสเตมินาน้อยมาก (เช่น < 1) ไม่ควรให้ยกโล่ขึ้นมาได้เลย
+        if (status.currentStamina <= 1f)
         {
-            Debug.Log("Stamina หมด! ป้องกันไม่ได้!");
+            isBlocking = false; // บังคับปิด
+            if (shieldModel) shieldModel.SetActive(false); // บังคับซ่อน
+            Debug.Log("Stamina ไม่พอจะยกโล่!");
             return;
         }
+
         isBlocking = true;
         if (shieldModel) shieldModel.SetActive(true);
         Debug.Log("เริ่มป้องกัน... Stamina: " + status.currentStamina);
@@ -193,7 +197,7 @@ public class PlayerCombat : MonoBehaviour
     void StopBlocking()
     {
         isBlocking = false;
-        if (shieldModel) shieldModel.SetActive(false);
+       // if (shieldModel) shieldModel.SetActive(false); อย่าเอาออก
 
         // เช็กเพิ่มตรงนี้
         if (status.currentStamina <= 0)
@@ -211,15 +215,15 @@ public class PlayerCombat : MonoBehaviour
         // ลด Stamina เรื่อยๆ ขณะกดค้างป้องกัน
         if (isBlocking)
         {
-            if (status.currentStamina > 0)
+            // เช็กเพิ่ม: ถ้าสเตมินาหมด หรือ ผู้เล่นไม่ได้กดปุ่ม Heavy Attack ค้างไว้แล้ว (เผื่อ Released ไม่ทำงาน)
+            // สมมติปุ่มป้องกันคือ Mouse 1 (คลิกขวา)
+            if (status.currentStamina <= 0 || !Input.GetMouseButton(1))
             {
-                status.currentStamina -= blockStaminaDrainRate * Time.deltaTime;
-                
+                StopBlocking();
             }
             else
             {
-                StopBlocking();
-                Debug.Log("Stamina หมด! หยุดป้องกันอัตโนมัติ");
+                status.currentStamina -= blockStaminaDrainRate * Time.deltaTime;
             }
         }
     }
