@@ -1,19 +1,24 @@
 using UnityEngine;
 
+// ใช้สำหรับอาวุธระยะประชิด (ดาบ, โล่)
 public class DamageDealer : MonoBehaviour
 {
-    public float damage = 20f;
+    public float damage = 0f;
+
+    void Awake()
+    {
+        // ดึง damage จาก CharacterStatus บน player อัตโนมัติ
+        CharacterStatus status = GetComponentInParent<CharacterStatus>();
+        if (status != null)
+            damage = status.GetSwordDamage();
+    }
 
     private void OnTriggerEnter(Collider other)
     {
-        // ถ้าชนวัตถุที่มี Tag ว่า Enemy
-        if (other.CompareTag("Enemy"))
-        {
-            // สั่งลดเลือด (ใช้สคริปต์ EnemyHealth ที่เราเตรียมไว้เมื่อกี้)
-            if (other.GetComponent<EnemyHealth>())
-            {
-                other.GetComponent<EnemyHealth>().TakeDamage(damage);
-            }
-        }
+        if (!other.CompareTag("Enemy")) return;
+
+        EnemyHealth eh = other.GetComponent<EnemyHealth>();
+        if (eh != null)
+            eh.TakeDamage(damage);
     }
 }

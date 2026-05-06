@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class CharacterStatus : MonoBehaviour
 {
+    private PlayerCombat playerCombat;
     [Header("Health")]
     public float maxHp = 100f;
     public float currentHp;
@@ -19,21 +20,28 @@ public class CharacterStatus : MonoBehaviour
     [Header("Combat Stats")]
     public float swordDamage = 15f;
     public float magicDamage = 20f;
+   
 
     void Awake()
     {
         currentHp = maxHp;
         currentMana = maxMana;
         currentStamina = maxStamina;
+        playerCombat = GetComponent<PlayerCombat>();
     }
 
     void Update()
     {
-        if (currentStamina < maxStamina)
-            currentStamina = Mathf.Clamp(currentStamina + staminaRegenRate * Time.deltaTime, 0, maxStamina);
+        
+        
+            // Stamina regen เฉพาะตอนไม่ได้ป้องกัน
+            if (currentStamina < maxStamina && !playerCombat.isBlocking)
+                currentStamina = Mathf.Clamp(currentStamina + staminaRegenRate * Time.deltaTime, 0, maxStamina);
 
-        if (currentMana < maxMana)
-            currentMana = Mathf.Clamp(currentMana + manaRegenRate * Time.deltaTime, 0, maxMana);
+            // Mana regen ปกติ
+            if (currentMana < maxMana)
+                currentMana = Mathf.Clamp(currentMana + manaRegenRate * Time.deltaTime, 0, maxMana);
+        
     }
 
     public float GetSwordDamage() => swordDamage;

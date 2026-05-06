@@ -18,7 +18,7 @@ public class WeaponShooter : MonoBehaviour
         GameObject bullet = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
 
         // ส่ง damage ไปให้ DamageDealer บนกระสุน
-        DamageDealer dd = bullet.GetComponent<DamageDealer>();
+        BulletDamageDealer dd = bullet.GetComponent<BulletDamageDealer>();
         if (dd != null) dd.damage = damage;
 
         Rigidbody rb = bullet.GetComponent<Rigidbody>();
