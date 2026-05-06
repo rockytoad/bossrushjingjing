@@ -3,9 +3,10 @@ using UnityEngine;
 public class CharacterStatus : MonoBehaviour
 {
     private PlayerCombat playerCombat;
+    public HealthBar healthBarUI;
     [Header("Health")]
-    public float maxHp = 100f;
-    public float currentHp;
+    public float maxHealth = 100f;
+    public float currentHealth;
 
     [Header("Mana")]
     public float maxMana = 50f;
@@ -20,14 +21,21 @@ public class CharacterStatus : MonoBehaviour
     [Header("Combat Stats")]
     public float swordDamage = 15f;
     public float magicDamage = 20f;
-   
+    
 
     void Awake()
     {
-        currentHp = maxHp;
+        currentHealth = maxHealth;
         currentMana = maxMana;
         currentStamina = maxStamina;
         playerCombat = GetComponent<PlayerCombat>();
+    }
+    void Start()
+    {
+        // ตั้งค่าเริ่มต้นให้ UI
+        healthBarUI.SetMaxHealth(maxHealth);
+        healthBarUI.SetMaxMana(maxMana);
+        healthBarUI.SetMaxStamina(maxStamina);
     }
 
     void Update()
@@ -41,7 +49,11 @@ public class CharacterStatus : MonoBehaviour
             // Mana regen ปกติ
             if (currentMana < maxMana)
                 currentMana = Mathf.Clamp(currentMana + manaRegenRate * Time.deltaTime, 0, maxMana);
-        
+
+        healthBarUI.SetHealth(currentHealth);
+        healthBarUI.SetMana(currentMana);
+        healthBarUI.SetStamina(currentStamina);
+
     }
 
     public float GetSwordDamage() => swordDamage;
@@ -49,8 +61,8 @@ public class CharacterStatus : MonoBehaviour
 
     public void TakeDamage(float amount)
     {
-        currentHp = Mathf.Clamp(currentHp - amount, 0, maxHp);
-        if (currentHp <= 0) Debug.Log("Player Dead!");
+        currentHealth = Mathf.Clamp(currentHealth - amount, 0, maxHealth);
+        if (currentHealth <= 0) Debug.Log("Player Dead!");
     }
 
     public bool UseStamina(float amount)
