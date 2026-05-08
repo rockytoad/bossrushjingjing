@@ -1,13 +1,14 @@
 using UnityEngine;
 
-// ใช้สำหรับอาวุธระยะประชิด (ดาบ, โล่)
 public class DamageDealer : MonoBehaviour
 {
     public float damage = 0f;
 
-    void Awake()
+    // แนะนำให้ใช้ OnEnable หรือเรียกใช้จากสคริปต์ Combat ตอนฟัน
+    // เพื่ออัปเดตดาเมจล่าสุด (เผื่อมีการอัปเกรดระหว่างเล่น)
+    void Start()
     {
-        // ดึง damage จาก CharacterStatus บน player อัตโนมัติ
+        // ค้นหา CharacterStatus ในตัว Player (Parent)
         CharacterStatus status = GetComponentInParent<CharacterStatus>();
         if (status != null)
             damage = status.GetSwordDamage();
@@ -15,10 +16,18 @@ public class DamageDealer : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (!other.CompareTag("Enemy")) return;
+        if (!other.CompareTag("Boss")) return;
 
-        EnemyHealth eh = other.GetComponent<EnemyHealth>();
-        if (eh != null)
-            eh.TakeDamage(damage);
+        BossStatus boss = other.GetComponent<BossStatus>();
+        if (boss != null)
+        {
+            boss.TakeDamage(damage);
+
+            // --- จุดสำคัญ ---
+            // ห้ามใส่ Destroy(gameObject); ตรงนี้เด็ดขาดถ้าเป็นดาบ!
+            // ไม่งั้นดาบจะหายไปจากมือนายครับ
+
+            Debug.Log("ฟันบอสเข้าแล้ว! ดาเมจ: " + damage);
+        }
     }
 }

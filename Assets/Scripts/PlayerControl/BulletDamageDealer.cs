@@ -7,13 +7,13 @@ public class BulletDamageDealer : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (!other.CompareTag("Enemy")) return;
+        if (!other.CompareTag("Boss")) return;
 
-        EnemyHealth eh = other.GetComponent<EnemyHealth>();
-        if (eh != null)
+        BossStatus boss = other.GetComponent<BossStatus>();
+        if (boss != null)
         {
-            eh.TakeDamage(damage);
-            Destroy(gameObject);
+            boss.TakeDamage(damage); // ส่งดาเมจไปลดเลือดบอส + ลดหลอด UI
+            Destroy(gameObject);     // กระสุนหายไปเมื่อชน
         }
     }
 }
