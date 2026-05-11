@@ -6,30 +6,49 @@ public class BossStatus : MonoBehaviour
     public float maxHealth = 1000f;
     public float currentHealth;
 
-    public BossHealthUI bossUI; // ลาก BossHealthPanel มาใส่ช่องนี้
+    public BossHealthUI bossUI;
+
+    // เพิ่มตรงนี้: เพื่อดึงสถานะอมตะมาเช็ก
+    private BossPhaseManager phaseManager;
 
     void Start()
     {
         currentHealth = maxHealth;
-        // ปิด UI บอสไว้ก่อนตอนเริ่มเกม
-        bossUI.gameObject.SetActive(false);
+        phaseManager = GetComponent<BossPhaseManager>(); // เชื่อมต่อกับ Manager
+
+        if (bossUI != null) bossUI.gameObject.SetActive(false);
     }
 
-    // เรียกฟังก์ชันนี้ผ่าน Event หรือ Trigger ตอนผู้เล่นเดินเข้าห้องบอส
     public void StartBossFight()
     {
-        bossUI.SetupBoss(bossName, maxHealth);
+        if (bossUI != null)
+        {
+            bossUI.gameObject.SetActive(true);
+            bossUI.SetupBoss(bossName, maxHealth);
+        }
     }
 
     public void TakeDamage(float damage)
     {
-        currentHealth -= damage;
-        bossUI.UpdateBossHealth(currentHealth);
+        // --- ส่วนสำคัญ: เช็กว่า Manager สั่งให้อมตะอยู่ไหม ---
+        if (phaseManager != null && phaseManager.isInvulnerable)
+        {
+            Debug.Log("โจมตีไม่เข้า! บอสกำลังอยู่ในช่วงอมตะเปลี่ยนเฟส");
+            return;
+        }
+        // ---------------------------------------------
+
+        currentHealth = Mathf.Clamp(currentHealth - damage, 0, maxHealth);
+
+        if (bossUI != null) bossUI.UpdateBossHealth(currentHealth);
 
         if (currentHealth <= 0) Die();
     }
 
-    void Die() {
+    void Die()
+    {
+        Debug.Log(bossName + " ตายแล้ว!");
+        // อาจจะใส่ Effect ระเบิดตรงนี้ก่อน Destroy
         Destroy(gameObject);
     }
 }
