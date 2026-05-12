@@ -3699,8 +3699,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossAI
   player: {fileID: 125276334}
-  moveSpeed: 3
   stopDistance: 2
+  p1Speed: 3
+  p1Cooldown: 2.5
+  p2Speed: 5
+  p2Cooldown: 1.5
+  p2SpecialChance: 30
+  p3Cooldown: 0.8
 --- !u!65 &1769310695
 BoxCollider:
   m_ObjectHideFlags: 0
