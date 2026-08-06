@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.AI; // ⚠️ เพิ่มไลบรารี NavMesh ตรงนี้ครับ
 
 public class BossAI : MonoBehaviour
 {
@@ -24,15 +25,23 @@ public class BossAI : MonoBehaviour
 
     private BossPhaseManager phaseManager;
     private float nextAttackTime;
-    private float currentMoveSpeed;
 
-    // --- เปลี่ยนมาเชื่อมกับสคริปต์จริงของนายตรงนี้! ---
+    // --- เปลี่ยนระบบเดินมาใช้ NavMeshAgent ---
+    private NavMeshAgent agent;
     private CharacterStatus playerStatus;
 
     void Start()
     {
         phaseManager = GetComponent<BossPhaseManager>();
-        currentMoveSpeed = p1Speed;
+
+        // 1. ดึง NavMeshAgent จากตัวบอส
+        agent = GetComponent<NavMeshAgent>();
+
+        // 2. ตั้งค่าระยะหยุดเดินตามที่ตั้งไว้ใน Inspector
+        if (agent != null)
+        {
+            agent.stoppingDistance = stopDistance;
+        }
 
         if (player != null)
         {
@@ -42,35 +51,48 @@ public class BossAI : MonoBehaviour
 
     void Update()
     {
-        if (player == null) return;
+        if (player == null || agent == null) return;
 
-        // 1. หันหน้าหาผู้เล่น
+        int currentPhase = (phaseManager != null) ? phaseManager.currentPhase : 1;
+
+        // --- 1. เช็กเบรกมือเฟส 3 (หยุดเดิน แล้วสาดสกิลอย่างเดียว) ---
+        if (currentPhase == 3)
+        {
+            agent.isStopped = true; // สั่งหยุดเดิน NavMesh
+
+            // หันหน้าหา Player
+            LookAtPlayer();
+
+            HandleAttackLogic(3);
+            return;
+        }
+
+        // --- 2. อัปเดตความเร็ว NavMesh ตาม Phase ---
+        agent.speed = (currentPhase == 2) ? p2Speed : p1Speed;
+
+        // --- 3. สั่งให้ NavMeshAgent เดินอ้อมสิ่งกีดขวางไปหา Player ---
+        agent.isStopped = false;
+        agent.SetDestination(player.position);
+
+        // --- 4. ระบบการโจมตีเมื่อถึงระยะ stopDistance ---
+        float distance = Vector3.Distance(transform.position, player.position);
+
+        if (distance <= stopDistance)
+        {
+            LookAtPlayer(); // หันหน้าหาคนเล่นก่อนตบ
+            HandleAttackLogic(currentPhase);
+        }
+    }
+
+    // ฟังก์ชันช่วยหันหน้าหา Player
+    void LookAtPlayer()
+    {
         Vector3 direction = player.position - transform.position;
         direction.y = 0;
         if (direction != Vector3.zero)
         {
             transform.rotation = Quaternion.Slerp(transform.rotation,
                 Quaternion.LookRotation(direction), 0.1f);
-        }
-
-        // 2. เช็กเบรกมือเฟส 3
-        if (phaseManager != null && phaseManager.currentPhase == 3)
-        {
-            HandleAttackLogic(3);
-            return;
-        }
-
-        // 3. ระบบเดินเข้าหา
-        float distance = Vector3.Distance(transform.position, player.position);
-
-        if (distance > stopDistance)
-        {
-            currentMoveSpeed = (phaseManager.currentPhase == 2) ? p2Speed : p1Speed;
-            transform.position += direction.normalized * currentMoveSpeed * Time.deltaTime;
-        }
-        else
-        {
-            HandleAttackLogic(phaseManager.currentPhase);
         }
     }
 
@@ -88,7 +110,6 @@ public class BossAI : MonoBehaviour
 
     void DetermineAttack(int phase)
     {
-        // เช็กกันเหนี่ยวนิดนึงเผื่อหาไม่เจอตอนเริ่มเกม
         if (playerStatus == null && player != null)
         {
             playerStatus = player.GetComponent<CharacterStatus>();
@@ -97,7 +118,7 @@ public class BossAI : MonoBehaviour
         if (phase == 1)
         {
             Debug.Log("<color=white>Boss: [Phase 1] ตบเบาๆ แปะ!</color>");
-            if (playerStatus != null) playerStatus.TakeDamage(p1Damage); // เรียกใช้ฟังก์ชันใน CharacterStatus ของนาย
+            if (playerStatus != null) playerStatus.TakeDamage(p1Damage);
         }
         else if (phase == 2)
         {
@@ -119,6 +140,5 @@ public class BossAI : MonoBehaviour
         }
     }
 
-    // ฟังก์ชันช่วยสุ่มเลข
     float randomValCheck() => Random.Range(0f, 100f);
 }
