@@ -16,7 +16,7 @@ public class PlayerCombat : MonoBehaviour
 
     [Header("Shield Settings")]
     public bool isBlocking = false;
-    public GameObject shieldModel;
+    public GameObject shieldModel; // ใส่ GameObject ของโล่ป้องกัน (หรือปรับตามโครงสร้างอาวุธ)
 
     [Header("Resource Costs")]
     public float chargedSlashStaminaCost = 30f;
@@ -49,7 +49,7 @@ public class PlayerCombat : MonoBehaviour
         string type = weaponManager.currentWeaponType.ToLower();
         if (type.Contains("sword")) SwordCombo();
         else if (type.Contains("magic")) MagicShoot();
-        else if (type.Contains("shield")) ShieldCombo(); // คอมโบเหมือนดาบ
+        else if (type.Contains("shield")) ShieldCombo();
     }
 
     public void OnHeavyAttack()
@@ -58,17 +58,16 @@ public class PlayerCombat : MonoBehaviour
         string type = weaponManager.currentWeaponType.ToLower();
         if (type.Contains("sword")) StartCoroutine(ChargedSlash());
         else if (type.Contains("magic")) MagicExplosion();
-        // โล่จัดการผ่าน OnHeavyAttackHeld/Released แทน
     }
 
-    // เรียกจาก PlayerController ตอนกดค้าง
+    // เรียกจาก PlayerController ตอนกดค้าง (คลิกขวา)
     public void OnHeavyAttackHeld()
     {
         string type = weaponManager.currentWeaponType.ToLower();
         if (type.Contains("shield")) StartBlocking();
     }
 
-    // เรียกจาก PlayerController ตอนปล่อย
+    // เรียกจาก PlayerController ตอนปล่อย (ปล่อยคลิกขวา)
     public void OnHeavyAttackReleased()
     {
         string type = weaponManager.currentWeaponType.ToLower();
@@ -103,9 +102,13 @@ public class PlayerCombat : MonoBehaviour
 
     IEnumerator EnableSwordHitbox()
     {
-        if (swordCollider) swordCollider.enabled = true;
+        if (swordCollider != null)
+        {
+            // ย้ายจุด Center หรือ Position ของ Hitbox ไปทางที่ Sprite หันไปอยู่
+            swordCollider.enabled = true;
+        }
         yield return new WaitForSeconds(attackDuration);
-        if (swordCollider) swordCollider.enabled = false;
+        if (swordCollider != null) swordCollider.enabled = false;
     }
 
     IEnumerator ChargedSlash()
@@ -180,26 +183,24 @@ public class PlayerCombat : MonoBehaviour
 
     void StartBlocking()
     {
-        // ถ้าสเตมินาน้อยมาก (เช่น < 1) ไม่ควรให้ยกโล่ขึ้นมาได้เลย
+        // ถ้า Stamina หมดหรือน้อยเกินไป ห้ามยกโล่
         if (status.currentStamina <= 1f)
         {
-            isBlocking = false; // บังคับปิด
-            if (shieldModel) shieldModel.SetActive(false); // บังคับซ่อน
+            StopBlocking();
             Debug.Log("Stamina ไม่พอจะยกโล่!");
             return;
         }
 
         isBlocking = true;
-        if (shieldModel) shieldModel.SetActive(true);
+        // ปรับตรงนี้: ถ้ามี Visual Effects หรือ Animation การตั้งการ์ดค่อยสั่งตรงนี้
+        // ไม่สั่งปิด shieldModel เพื่อไม่ให้โมเดลอาวุธหาย
         Debug.Log("เริ่มป้องกัน... Stamina: " + status.currentStamina);
     }
 
     void StopBlocking()
     {
         isBlocking = false;
-       // if (shieldModel) shieldModel.SetActive(false); อย่าเอาออก
 
-        // เช็กเพิ่มตรงนี้
         if (status.currentStamina <= 0)
         {
             Debug.Log("Stamina หมด! การป้องกันถูกยกเลิก");
@@ -212,18 +213,16 @@ public class PlayerCombat : MonoBehaviour
 
     void Update()
     {
-        // ลด Stamina เรื่อยๆ ขณะกดค้างป้องกัน
+        // คอยหัก Stamina เรื่อยๆ เมื่ออยู่ในสถานะป้องกัน
         if (isBlocking)
         {
-            // เช็กเพิ่ม: ถ้าสเตมินาหมด หรือ ผู้เล่นไม่ได้กดปุ่ม Heavy Attack ค้างไว้แล้ว (เผื่อ Released ไม่ทำงาน)
-            // สมมติปุ่มป้องกันคือ Mouse 1 (คลิกขวา)
-            if (status.currentStamina <= 0 || !Input.GetMouseButton(1))
+            // ใช้ฟังก์ชัน UseStamina ของ CharacterStatus เพื่อหักค่าความลื่นไหล
+            bool hasStamina = status.UseStamina(blockStaminaDrainRate * Time.deltaTime);
+
+            // ถ้า Stamina หมด ให้ยกเลิกการตั้งการ์ดทันที
+            if (!hasStamina || status.currentStamina <= 0)
             {
                 StopBlocking();
-            }
-            else
-            {
-                status.currentStamina -= blockStaminaDrainRate * Time.deltaTime;
             }
         }
     }
