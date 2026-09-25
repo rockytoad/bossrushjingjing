@@ -3,21 +3,25 @@ using UnityEngine;
 
 public class MeleeAttack : MonoBehaviour
 {
-    public float damage = 25f;
+    public float baseDamage = 25f;
     public float attackDuration = 0.2f; // ระยะเวลาเปิด Hitbox ตอนฟัน
-    private BoxCollider hitCollider;
+    private Collider hitCollider;
+    private float currentMultiplier = 1f;
 
     void Start()
     {
-        hitCollider = GetComponent<BoxCollider>();
+        hitCollider = GetComponent<Collider>();
         if (hitCollider != null)
         {
             hitCollider.enabled = false; // ปิดกล่องไว้ก่อนในเวลาปกติ
         }
     }
 
-    public void Swing()
+    // ปรับให้รับค่า damageMultiplier เข้ามาได้
+    public void Swing(float damageMultiplier = 1.0f)
     {
+        currentMultiplier = damageMultiplier;
+        StopAllCoroutines(); // กันลูปชนกันเวลากดฟันรัวๆ
         StartCoroutine(AttackRoutine());
     }
 
@@ -30,14 +34,13 @@ public class MeleeAttack : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Boss"))
+        // เช็กทั้ง BossStatus และ Tag เผื่อไว้กันพลาด
+        BossStatus boss = other.GetComponent<BossStatus>();
+        if (boss != null)
         {
-            BossStatus boss = other.GetComponent<BossStatus>();
-            if (boss != null)
-            {
-                boss.TakeDamage(damage);
-                Debug.Log("⚔️ ฟันโดนบอสเต็มๆ!");
-            }
+            float finalDamage = baseDamage * currentMultiplier;
+            boss.TakeDamage(finalDamage);
+            Debug.Log("<color=red>⚔️ ฟันโดนบอส! ดาเมจ: " + finalDamage + "</color>");
         }
     }
 }

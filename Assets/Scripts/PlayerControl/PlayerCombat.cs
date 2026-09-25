@@ -6,7 +6,9 @@ public class PlayerCombat : MonoBehaviour
     private Weaponmanager weaponManager;
     private WeaponShooter weaponShooter;
     private CharacterStatus status;
-
+    [Header("Sword Setup")]
+    public DamageDealer swordDamageDealer; // แก้เส้นแดงตรง swordDamageDealer
+    private bool isAuraActive = false;     // แก้เส้นแดงตรง isAuraActive
     [Header("Sword Combo")]
     public int comboStep = 0;
     public float comboResetDelay = 1.0f;
@@ -86,31 +88,22 @@ public class PlayerCombat : MonoBehaviour
     // --- Sword ---
     void SwordCombo()
     {
-        if (!status.UseStamina(10f))
-        {
-            Debug.Log("เหนื่อยเกินไป ฟันไม่ไหว!");
-            return;
-        }
+        if (!status.UseStamina(10f)) return;
 
         if (Time.time - lastComboTime > comboResetDelay) comboStep = 0;
         comboStep++;
         lastComboTime = Time.time;
-        StartCoroutine(EnableSwordHitbox());
-        Debug.Log("Sword Combo Stage: " + comboStep);
+
+        float multiplier = (comboStep == 3) ? 1.5f : 1.0f; // จังหวะ 3 แรง 1.5 เท่า
+        if (isAuraActive) multiplier *= 1.2f; // บัฟออร่า +20%
+
+        // สั่งฟันปุ่มเดียวจบ!
+        if (swordDamageDealer != null) swordDamageDealer.Swing(multiplier);
+
         if (comboStep >= 3) comboStep = 0;
     }
 
-    IEnumerator EnableSwordHitbox()
-    {
-        if (swordCollider != null)
-        {
-            // ย้ายจุด Center หรือ Position ของ Hitbox ไปทางที่ Sprite หันไปอยู่
-            swordCollider.enabled = true;
-        }
-        yield return new WaitForSeconds(attackDuration);
-        if (swordCollider != null) swordCollider.enabled = false;
-    }
-
+    
     IEnumerator ChargedSlash()
     {
         if (!status.UseStamina(chargedSlashStaminaCost))
@@ -118,19 +111,48 @@ public class PlayerCombat : MonoBehaviour
             Debug.Log("Stamina ไม่พอ! ชาร์จไม่ได้!");
             yield break;
         }
+
         Debug.Log("เริ่มชาร์จ... เสีย Stamina " + chargedSlashStaminaCost);
-        yield return new WaitForSeconds(1f);
-        Debug.Log("ฟันโช๊ะ!");
+        yield return new WaitForSeconds(0.6f); // เวลาชาร์จฟัน 0.6 วินาที
+
+        // คำนวณดาเมจ: ชาร์จฟันแรง 2.5 เท่า (ถ้าเปิดออร่าคูณเพิ่มอีก 20%)
+        float multiplier = 2.5f;
+        if (isAuraActive) multiplier *= 1.2f;
+
+        // สั่งฟันผ่าน DamageDealer!
+        if (swordDamageDealer != null)
+        {
+            swordDamageDealer.Swing(multiplier);
+        }
+
+        Debug.Log("<color=red>💥 ฟันชาร์จโช๊ะ!! Multiplier: " + multiplier + "</color>");
     }
 
     void SwordAuraSkill()
     {
+        if (isAuraActive)
+        {
+            Debug.Log("ออร่าดาบทำงานอยู่แล้ว!");
+            return;
+        }
+
         if (!status.UseMana(swordSkillManaCost))
         {
             Debug.Log("Mana ไม่พอ! ใช้สกิลไม่ได้!");
             return;
         }
-        Debug.Log("เปิดใช้งานดาบออร่า! เพิ่มดาเมจ 20% เสีย Mana " + swordSkillManaCost);
+
+        StartCoroutine(AuraBuffRoutine(10f)); // เปิดบัฟนาน 10 วินาที
+    }
+    IEnumerator AuraBuffRoutine(float duration)
+    {
+        isAuraActive = true;
+        Debug.Log("<color=cyan>✨ เปิดใช้งานดาบออร่า! เพิ่มดาเมจ 20% เป็นเวลา " + duration + " วินาที</color>");
+
+        yield return new WaitForSeconds(duration);
+
+        isAuraActive = false;
+        Debug.Log("<color=white>✨ บัฟออร่าดาบหมดเวลาแล้ว!</color>");
     }
 
     // --- Magic ---
@@ -181,7 +203,7 @@ public class PlayerCombat : MonoBehaviour
         if (comboStep >= 3) comboStep = 0;
     }
 
-    void StartBlocking()
+    public void StartBlocking()
     {
         // ถ้า Stamina หมดหรือน้อยเกินไป ห้ามยกโล่
         if (status.currentStamina <= 1f)
@@ -197,7 +219,7 @@ public class PlayerCombat : MonoBehaviour
         Debug.Log("เริ่มป้องกัน... Stamina: " + status.currentStamina);
     }
 
-    void StopBlocking()
+    public void StopBlocking()
     {
         isBlocking = false;
 

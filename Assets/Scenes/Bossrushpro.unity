@@ -793,6 +793,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b8df09e36c2936a4da9f1f0c96e0887d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCombat
+  swordDamageDealer: {fileID: 1641921862}
   comboStep: 0
   comboResetDelay: 1
   swordCollider: {fileID: 1641921861}
@@ -3083,6 +3084,7 @@ GameObject:
   - component: {fileID: 1641921859}
   - component: {fileID: 1641921860}
   - component: {fileID: 1641921861}
+  - component: {fileID: 1641921862}
   m_Layer: 0
   m_Name: sword
   m_TagString: Untagged
@@ -3185,6 +3187,19 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.3, y: 0.6, z: 0.19}
   m_Center: {x: -0.08, y: 0.23, z: -0.08}
+--- !u!114 &1641921862
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1641921858}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f64a87722f6e10742a93ef51b4c8d410, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DamageDealer
+  baseDamage: 0
 --- !u!1 &1665045976
 GameObject:
   m_ObjectHideFlags: 0

@@ -61,25 +61,43 @@ public class CharacterStatus : MonoBehaviour
 
     public void TakeDamage(float amount)
     {
+        // 1. เช็กอมตะ (I-Frame) ของเดิม - ถ้ายังอยู่ในช่วงอมตะจะไม่ได้รับดาเมจ
         if (Time.time < nextDamageTime) return;
 
-        // 1. ลดเลือดและ Clamp ค่าไว้ไม่ให้เกิน Max หรือต่ำกว่า 0
+        // 2. [แทรกระบบโล่เพิ่มตรงนี้] ถ้ากำลังตั้งการ์ดอยู่ ให้ลดทอนดาเมจก่อน
+        PlayerCombat combat = GetComponent<PlayerCombat>();
+        if (combat != null && combat.isBlocking)
+        {
+            amount *= 0.3f; // ลดดาเมจลง 70% (โดนจริงแค่ 30%)
+            bool hasStamina = UseStamina(15f); // หัก Stamina จากแรงกระแทกที่บล็อกไว้
+
+            Debug.Log("<color=blue>🛡️ ยกโล่กันไว้ได้! ดาเมจลดเหลือ: " + amount + "</color>");
+
+            // ถ้า Stamina หมดจากการกันรอบนี้ สั่งให้การ์ดแตกทันที
+            if (!hasStamina || currentStamina <= 0)
+            {
+                combat.StopBlocking();
+                Debug.Log("<color=orange>⚠️ การ์ดแตก! Stamina หมด</color>");
+            }
+        }
+
+        // 3. ลดเลือดและ Clamp ค่าไว้ไม่ให้เกิน Max หรือต่ำกว่า 0 (ของเดิม)
         currentHealth = Mathf.Clamp(currentHealth - amount, 0, maxHealth);
 
-        // 2. สั่งให้หลอดเลือดบนหน้าจอขยับตาม (สำคัญมาก!)
+        // 4. สั่งให้หลอดเลือดบนหน้าจอขยับตาม (ของเดิม)
         if (healthBarUI != null)
         {
             healthBarUI.SetHealth(currentHealth);
         }
 
-        // 3. เช็กสถานะตาย
+        // 5. เช็กสถานะตาย (ของเดิม)
         if (currentHealth <= 0)
         {
             Debug.Log("Player Dead!");
-            Die(); // แยกฟังก์ชันตายไว้ข้างล่างจะจัดการง่ายกว่า
+            Die();
         }
 
-        // 4. เซตเวลาอมตะ (I-Frame)
+        // 6. เซตเวลาอมตะ I-Frame (ของเดิม)
         nextDamageTime = Time.time + damageCooldown;
     }
 
