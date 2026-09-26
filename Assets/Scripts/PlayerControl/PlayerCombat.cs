@@ -9,6 +9,8 @@ public class PlayerCombat : MonoBehaviour
     [Header("Sword Setup")]
     public DamageDealer swordDamageDealer; // แก้เส้นแดงตรง swordDamageDealer
     private bool isAuraActive = false;     // แก้เส้นแดงตรง isAuraActive
+    [Header("Shield Setup")]
+    public DamageDealer shieldDamageDealer; // ลาก DamageDealer บนโล่มาใส่
     [Header("Sword Combo")]
     public int comboStep = 0;
     public float comboResetDelay = 1.0f;
@@ -40,14 +42,16 @@ public class PlayerCombat : MonoBehaviour
 
     bool CanAct()
     {
-        if (Time.unscaledTime - lastActionTime < actionCooldown) return false;
-        lastActionTime = Time.unscaledTime;
-        return true;
+        return (Time.unscaledTime - lastActionTime >= actionCooldown);
     }
 
     public void OnLightAttack()
     {
+        float diff = Time.unscaledTime - lastActionTime;
+        Debug.Log($"[CHECK] CanAct: {CanAct()} | เวลาที่ผ่านไป: {diff:F2}s | Cooldown: {actionCooldown}s | อาวุธ: {weaponManager.currentWeaponType}");
+
         if (!CanAct()) return;
+
         string type = weaponManager.currentWeaponType.ToLower();
         if (type.Contains("sword")) SwordCombo();
         else if (type.Contains("magic")) MagicShoot();
@@ -88,6 +92,7 @@ public class PlayerCombat : MonoBehaviour
     // --- Sword ---
     void SwordCombo()
     {
+        lastActionTime = Time.unscaledTime;
         if (!status.UseStamina(10f)) return;
 
         if (Time.time - lastComboTime > comboResetDelay) comboStep = 0;
@@ -158,6 +163,7 @@ public class PlayerCombat : MonoBehaviour
     // --- Magic ---
     void MagicShoot()
     {
+        lastActionTime = Time.unscaledTime;
         if (!status.UseMana(10f))
         {
             Debug.Log("Mana ไม่พอ! ยิงไม่ออก");
@@ -169,6 +175,7 @@ public class PlayerCombat : MonoBehaviour
 
     void MagicExplosion()
     {
+        lastActionTime = Time.unscaledTime;
         if (!status.UseMana(magicExplosionManaCost))
         {
             Debug.Log("Mana ไม่พอ! ระเบิดไม่ออก!");
@@ -179,6 +186,7 @@ public class PlayerCombat : MonoBehaviour
 
     void MeteorSkill()
     {
+        lastActionTime = Time.unscaledTime;
         if (!status.UseMana(meteorSkillManaCost))
         {
             Debug.Log("Mana ไม่พอ! เรียกอุกกาบาตไม่ได้!");
@@ -190,6 +198,7 @@ public class PlayerCombat : MonoBehaviour
     // --- Shield ---
     void ShieldCombo()
     {
+        lastActionTime = Time.unscaledTime;
         if (!status.UseStamina(10f))
         {
             Debug.Log("เหนื่อยเกินไป กระแทกไม่ไหว! Stamina: " + status.currentStamina);
@@ -199,6 +208,14 @@ public class PlayerCombat : MonoBehaviour
         if (Time.time - lastComboTime > comboResetDelay) comboStep = 0;
         comboStep++;
         lastComboTime = Time.time;
+
+        // 💥 เพิ่มบรรทัดสั่งเปิด Hitbox ทำดาเมจตรงนี้!
+        float multiplier = (comboStep == 3) ? 1.5f : 1.0f; // จังหวะคอมโบที่ 3 แรงขึ้น 1.5 เท่า
+        if (shieldDamageDealer != null)
+        {
+            shieldDamageDealer.Swing(multiplier);
+        }
+
         Debug.Log("Shield Combo Stage: " + comboStep + " | Stamina คงเหลือ: " + status.currentStamina);
         if (comboStep >= 3) comboStep = 0;
     }
@@ -251,11 +268,19 @@ public class PlayerCombat : MonoBehaviour
 
     void ShieldStunSkill()
     {
+        lastActionTime = Time.unscaledTime; //  เพิ่มบรรทัดนี้เพื่อรีเซ็ต Cooldown!
+
         if (!status.UseMana(shieldSkillManaCost))
         {
             Debug.Log("Mana ไม่พอ! ใช้สกิลไม่ได้!");
             return;
         }
-        Debug.Log("กระแทกโล่! ศัตรูติดมึน เสีย Mana " + shieldSkillManaCost);
+
+        if (shieldDamageDealer != null)
+        {
+            shieldDamageDealer.Swing(2.0f);
+        }
+
+        Debug.Log("<color=yellow>🛡️💥 สกิล Shield Bash! ดาเมจ 2.0x (เสีย Mana " + shieldSkillManaCost + ")</color>");
     }
 }

@@ -474,7 +474,7 @@
                     "name": "",
                     "id": "617a1592-2413-44a0-9b5a-ae265e5fe01b",
                     "path": "<Mouse>/rightButton",
-                    "interactions": "",
+                    "interactions": "Press(behavior=2)",
                     "processors": "",
                     "groups": ";Keyboard&Mouse",
                     "action": "HeavyAttack",
