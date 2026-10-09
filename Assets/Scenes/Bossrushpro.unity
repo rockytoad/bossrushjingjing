@@ -631,7 +631,7 @@ GameObject:
   - component: {fileID: 545921853}
   - component: {fileID: 545921854}
   - component: {fileID: 545921855}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Player
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -652,7 +652,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CharacterStatus
   healthBarUI: {fileID: 1568557871}
   damageCooldown: 0.5
-  maxHealth: 100
+  maxHealth: 1e+10
   currentHealth: 0
   maxMana: 50
   currentMana: 0
@@ -794,12 +794,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCombat
   swordDamageDealer: {fileID: 1641921862}
+  shieldDamageDealer: {fileID: 836216546}
   comboStep: 0
   comboResetDelay: 1
   swordCollider: {fileID: 1641921861}
   attackDuration: 0.3
   isBlocking: 0
   shieldModel: {fileID: 0}
+  meteorPrefab: {fileID: 7502467389551894383, guid: a38bbc6dd83414c4d9db872bb05e8798, type: 3}
+  meteorSpawnHeight: 15
+  explosionLockOnRadius: 12
+  explosionDamageMultiplier: 2.5
+  explosionVFXPrefab: {fileID: 8229911503233985724, guid: 576463310a5ca4144aaa88b9c16d627e, type: 3}
   chargedSlashStaminaCost: 30
   blockStaminaDrainRate: 15
   magicExplosionManaCost: 25
@@ -961,9 +967,9 @@ GameObject:
   - component: {fileID: 645566549}
   - component: {fileID: 645566548}
   - component: {fileID: 645566547}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Cube (4)
-  m_TagString: Untagged
+  m_TagString: wall
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1073,9 +1079,9 @@ GameObject:
   - component: {fileID: 805292401}
   - component: {fileID: 805292400}
   - component: {fileID: 805292399}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Cube (3)
-  m_TagString: Untagged
+  m_TagString: wall
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1259,7 +1265,8 @@ GameObject:
   - component: {fileID: 836216543}
   - component: {fileID: 836216545}
   - component: {fileID: 836216544}
-  m_Layer: 0
+  - component: {fileID: 836216546}
+  m_Layer: 6
   m_Name: shield
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1300,8 +1307,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.56, y: 0.44, z: 0.18}
-  m_Center: {x: -0.03, y: 0.09, z: 0.010871961}
+  m_Size: {x: 0.27452624, y: 0.7853944, z: 0.949521}
+  m_Center: {x: -0.15429077, y: 0.2626968, z: -0.20814538}
 --- !u!212 &836216545
 SpriteRenderer:
   serializedVersion: 2
@@ -1361,6 +1368,19 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!114 &836216546
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 836216542}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f64a87722f6e10742a93ef51b4c8d410, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DamageDealer
+  baseDamage: 0
 --- !u!1 &836467189
 GameObject:
   m_ObjectHideFlags: 0
@@ -1370,7 +1390,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 836467190}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: magicpoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1457,9 +1477,9 @@ GameObject:
   - component: {fileID: 917100621}
   - component: {fileID: 917100620}
   - component: {fileID: 917100619}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Cube (2)
-  m_TagString: Untagged
+  m_TagString: wall
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1706,9 +1726,9 @@ GameObject:
   - component: {fileID: 1031229967}
   - component: {fileID: 1031229966}
   - component: {fileID: 1031229965}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Cube
-  m_TagString: Untagged
+  m_TagString: wall
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1907,9 +1927,9 @@ GameObject:
   - component: {fileID: 1143154847}
   - component: {fileID: 1143154846}
   - component: {fileID: 1143154845}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Cube (7)
-  m_TagString: Untagged
+  m_TagString: wall
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2176,8 +2196,9 @@ GameObject:
   - component: {fileID: 1205759010}
   - component: {fileID: 1205759015}
   - component: {fileID: 1205759016}
+  - component: {fileID: 1205759017}
   m_Layer: 0
-  m_Name: GameObject
+  m_Name: boss
   m_TagString: Boss
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2311,6 +2332,48 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
+--- !u!114 &1205759017
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1205759006}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d5311ff6bf179b4d848a01132b5e580, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BossSkills
+  player: {fileID: 545921851}
+  playerLayer:
+    serializedVersion: 2
+    m_Bits: 64
+  wallLayer:
+    serializedVersion: 2
+    m_Bits: 128
+  lineTelegraphPrefab: {fileID: 5391423666623064384, guid: ac361ad342974ab45865ca52ec94872d, type: 3}
+  circleTelegraphPrefab: {fileID: 5630149747528604222, guid: d4301ad7fc15a6a46868fbe23da7e87d, type: 3}
+  coneTelegraphPrefab: {fileID: 2543148686861160194, guid: d3602f0d3556399448892698fac726c6, type: 3}
+  shadowTelegraphPrefab: {fileID: 2374503127758533155, guid: fa06b027320e5af40b9ce2b6a8356fd1, type: 3}
+  audioSource: {fileID: 0}
+  biteVFXPrefab: {fileID: 0}
+  biteSFX: {fileID: 0}
+  stunBirdsVFXPrefab: {fileID: 0}
+  growlSFX: {fileID: 0}
+  dashSFX: {fileID: 0}
+  stunBirdsSFX: {fileID: 0}
+  shockwaveFXPrefab: {fileID: 0}
+  windUpSFX: {fileID: 0}
+  whistleSFX: {fileID: 0}
+  explosionSFX: {fileID: 0}
+  jellyThrustVFXPrefab: {fileID: 0}
+  jellyThrustSFX: {fileID: 0}
+  tentacleImpactVFXPrefab: {fileID: 0}
+  whipSFX: {fileID: 0}
+  tentacleImpactSFX: {fileID: 0}
+  isExecutingSkill: 0
+  tentaclePrefab: {fileID: 0}
+  tentacleSpawnRadius: 5
 --- !u!1 &1271317469
 GameObject:
   m_ObjectHideFlags: 0
@@ -2359,9 +2422,9 @@ GameObject:
   - component: {fileID: 1272733194}
   - component: {fileID: 1272733193}
   - component: {fileID: 1272733192}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Cube (5)
-  m_TagString: Untagged
+  m_TagString: wall
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2471,9 +2534,9 @@ GameObject:
   - component: {fileID: 1380519261}
   - component: {fileID: 1380519260}
   - component: {fileID: 1380519259}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Cube (1)
-  m_TagString: Untagged
+  m_TagString: wall
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2497,8 +2560,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Size: {x: 1, y: 0.99999946, z: 1.1283189}
+  m_Center: {x: 0, y: 0, z: 0.064157456}
 --- !u!23 &1380519260
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -2580,7 +2643,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1448916883}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: weponpivot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2615,7 +2678,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1531352853}
   - component: {fileID: 1531352854}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: magic
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2906,9 +2969,9 @@ GameObject:
   - component: {fileID: 1587203531}
   - component: {fileID: 1587203530}
   - component: {fileID: 1587203529}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Cube (8)
-  m_TagString: Untagged
+  m_TagString: wall
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -3085,7 +3148,7 @@ GameObject:
   - component: {fileID: 1641921860}
   - component: {fileID: 1641921861}
   - component: {fileID: 1641921862}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: sword
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3398,7 +3461,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1733217413}
   - component: {fileID: 1733217414}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: playersprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3569,264 +3632,6 @@ RectTransform:
   m_AnchoredPosition: {x: -643, y: -230}
   m_SizeDelta: {x: 160, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!1 &1769310692
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1769310698}
-  - component: {fileID: 1769310697}
-  - component: {fileID: 1769310696}
-  - component: {fileID: 1769310695}
-  - component: {fileID: 1769310702}
-  - component: {fileID: 1769310703}
-  - component: {fileID: 1769310694}
-  - component: {fileID: 1769310700}
-  - component: {fileID: 1769310701}
-  - component: {fileID: 1769310699}
-  - component: {fileID: 1769310704}
-  m_Layer: 0
-  m_Name: bosstest
-  m_TagString: Boss
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1769310694
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1769310692}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 78ce1f9636ca95c42ab3cb8413620896, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BossAI
-  player: {fileID: 0}
-  stopDistance: 2
-  p1Speed: 3
-  p1Cooldown: 2.5
-  p1Damage: 10
-  p2Speed: 5
-  p2Cooldown: 1.5
-  p2SpecialChance: 30
-  p2NormalDamage: 20
-  p2SpecialDamage: 35
-  p3Cooldown: 0.8
-  p3SkillDamage: 15
---- !u!65 &1769310695
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1769310692}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!23 &1769310696
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1769310692}
-  m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: 91b3afc40246ebe409c2a9357b699ee2, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_MaskInteraction: 0
-  m_AdditionalVertexStreams: {fileID: 0}
---- !u!33 &1769310697
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1769310692}
-  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!4 &1769310698
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1769310692}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.89, y: 3.98, z: 1.31}
-  m_LocalScale: {x: 5.2426, y: 5.2426, z: 5.2426}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!54 &1769310699
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1769310692}
-  serializedVersion: 5
-  m_Mass: 10
-  m_LinearDamping: 0
-  m_AngularDamping: 0.05
-  m_CenterOfMass: {x: 0, y: 0, z: 0}
-  m_InertiaTensor: {x: 1, y: 1, z: 1}
-  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ImplicitCom: 1
-  m_ImplicitTensor: 1
-  m_UseGravity: 0
-  m_IsKinematic: 1
-  m_Interpolate: 0
-  m_Constraints: 80
-  m_CollisionDetection: 0
---- !u!114 &1769310700
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1769310692}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b3f1265123f09454bb7738a0a0bb3d70, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BossStatus
-  bossName: Fucking Ratatui
-  maxHealth: 1000
-  currentHealth: 0
-  bossUI: {fileID: 838651162}
---- !u!114 &1769310701
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1769310692}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4b220820a26d09f47b9a9391e2131456, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BossDamageDealer
-  damage: 20
---- !u!65 &1769310702
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1769310692}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &1769310703
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1769310692}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8943e3f7569a56e41b870bbf3d43de2d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BossPhaseManager
-  phase2Threshold: 0.6
-  phase3Threshold: 0.3
-  currentPhase: 1
-  isInvulnerable: 0
---- !u!195 &1769310704
-NavMeshAgent:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1769310692}
-  m_Enabled: 0
-  m_AgentTypeID: 0
-  m_Radius: 0.5
-  m_Speed: 3.5
-  m_Acceleration: 8
-  avoidancePriority: 50
-  m_AngularSpeed: 120
-  m_StoppingDistance: 0
-  m_AutoTraverseOffMeshLink: 1
-  m_AutoBraking: 1
-  m_AutoRepath: 1
-  m_Height: 1
-  m_BaseOffset: 0.5
-  m_WalkableMask: 4294967295
-  m_ObstacleAvoidanceType: 4
 --- !u!1 &1778632833
 GameObject:
   m_ObjectHideFlags: 0
@@ -3839,9 +3644,9 @@ GameObject:
   - component: {fileID: 1778632836}
   - component: {fileID: 1778632835}
   - component: {fileID: 1778632834}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Cube (6)
-  m_TagString: Untagged
+  m_TagString: wall
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -4378,7 +4183,7 @@ Transform:
   m_GameObject: {fileID: 1985440991}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 7, z: -1.5}
+  m_LocalPosition: {x: 0, y: 7, z: -0.62}
   m_LocalScale: {x: 10, y: 10, z: 10}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4455,9 +4260,9 @@ GameObject:
   - component: {fileID: 1998555469}
   - component: {fileID: 1998555468}
   - component: {fileID: 1998555467}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Cube (9)
-  m_TagString: Untagged
+  m_TagString: wall
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -4744,7 +4549,6 @@ SceneRoots:
   - {fileID: 1272733195}
   - {fileID: 805292402}
   - {fileID: 1778632837}
-  - {fileID: 1769310698}
   - {fileID: 1568557875}
   - {fileID: 1159583232}
   - {fileID: 1920678874}

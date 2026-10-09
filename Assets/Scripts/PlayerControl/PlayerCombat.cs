@@ -7,8 +7,8 @@ public class PlayerCombat : MonoBehaviour
     private WeaponShooter weaponShooter;
     private CharacterStatus status;
     [Header("Sword Setup")]
-    public DamageDealer swordDamageDealer; // แก้เส้นแดงตรง swordDamageDealer
-    private bool isAuraActive = false;     // แก้เส้นแดงตรง isAuraActive
+    public DamageDealer swordDamageDealer; 
+    private bool isAuraActive = false;     
     [Header("Shield Setup")]
     public DamageDealer shieldDamageDealer; // ลาก DamageDealer บนโล่มาใส่
     [Header("Sword Combo")]
@@ -21,6 +21,13 @@ public class PlayerCombat : MonoBehaviour
     [Header("Shield Settings")]
     public bool isBlocking = false;
     public GameObject shieldModel; // ใส่ GameObject ของโล่ป้องกัน (หรือปรับตามโครงสร้างอาวุธ)
+    [Header("Meteor Setup")]
+    public GameObject meteorPrefab; // ลาก 3D Sphere ธรรมดามาใส่ทดสอบก่อนได้
+    public float meteorSpawnHeight = 15f; // ความสูงที่สปอว์นอุกกาบาตก่อนร่วงลงมา
+    [Header("Magic Explosion Setup")]
+    public float explosionLockOnRadius = 12f;
+    public float explosionDamageMultiplier = 2.5f; 
+    public GameObject explosionVFXPrefab; // ใส่ Particle Effect ทีหลังได้
 
     [Header("Resource Costs")]
     public float chargedSlashStaminaCost = 30f;
@@ -175,24 +182,77 @@ public class PlayerCombat : MonoBehaviour
 
     void MagicExplosion()
     {
-        lastActionTime = Time.unscaledTime;
+        lastActionTime = Time.unscaledTime; // ล็อก Cooldown กันกดเบิล
+
+        // 1. ค้นหาเป้าหมายศัตรูที่ใกล้ที่สุดในระยะ
+        Transform target = GetClosestTarget(explosionLockOnRadius);
+
+        // ถ้าไม่มีศัตรูในระยะล็อกเลย ให้ตัดจบ (หรือไม่เสีย Mana)
+        if (target == null)
+        {
+            Debug.Log("ไม่มีเป้าหมายในระยะล็อกระเบิด!");
+            return;
+        }
+
+        // 2. เช็ก Mana
         if (!status.UseMana(magicExplosionManaCost))
         {
             Debug.Log("Mana ไม่พอ! ระเบิดไม่ออก!");
             return;
         }
-        Debug.Log("เวทระเบิด! เสีย Mana " + magicExplosionManaCost);
+
+        // 3. คำนวณดาเมจ
+        float damage = status.GetMagicDamage() * explosionDamageMultiplier;
+
+        // 4. ส่งดาเมจเข้าตัวเป้าหมายที่ล็อกไว้โดยตรง
+        BossStatus boss = target.GetComponent<BossStatus>();
+        if (boss != null)
+        {
+            boss.TakeDamage(damage);
+        }
+        /* ถ้ามีศัตรูทั่วไปในอนาคต:
+        EnemyStatus enemy = target.GetComponent<EnemyStatus>();
+        if (enemy != null) enemy.TakeDamage(damage);
+        */
+
+        // 5. เสก Effect ระเบิดตรงตำแหน่งตัวศัตรู (ใส่ VFX ทีหลังได้)
+        if (explosionVFXPrefab != null)
+        {
+            GameObject vfx = Instantiate(explosionVFXPrefab, target.position, Quaternion.identity);
+            Destroy(vfx, 1.0f); // เสกเสร็จ 1 วินาที สั่งทำลายทิ้งทันทีไม่ให้รก Hierarchy
+        }
+
+        Debug.Log($"<color=magenta>💥 ระเบิดเวทล็อกเป้าใส่ [{target.name}] ดาเมจ: {damage}</color>");
     }
 
     void MeteorSkill()
     {
-        lastActionTime = Time.unscaledTime;
+        lastActionTime = Time.unscaledTime; // ล็อก Cooldown กันกดเบิล
+
         if (!status.UseMana(meteorSkillManaCost))
         {
             Debug.Log("Mana ไม่พอ! เรียกอุกกาบาตไม่ได้!");
             return;
         }
-        Debug.Log("เรียกอุกกาบาต! ตู้มมม เสีย Mana " + meteorSkillManaCost);
+
+        // 1. หาตำแหน่งเมาส์บนพื้นโลก 3D
+        Vector3 targetPos = GetMouseGroundPosition();
+        Vector3 spawnPos = targetPos + Vector3.up * meteorSpawnHeight;
+
+        // 2. เสกอุกกาบาต (ทรงกลมสำรอง) เหนือเป้าหมาย
+        if (meteorPrefab != null)
+        {
+            GameObject meteor = Instantiate(meteorPrefab, spawnPos, Quaternion.identity);
+
+            // ถ้า Prefab ยังไม่มีสคริปต์ MeteorProjectile ระบบจะแอดให้อัตโนมัติ
+            MeteorProjectile meteorScript = meteor.GetComponent<MeteorProjectile>();
+            if (meteorScript == null) meteorScript = meteor.AddComponent<MeteorProjectile>();
+
+            // ส่งตำแหน่งเป้าหมาย + ดาเมจ (เช่น ความแรงเวท x 3 เท่า)
+            meteorScript.Setup(targetPos, status.GetMagicDamage() * 3.0f);
+        }
+
+        Debug.Log("<color=orange>☄️ สั่งอุกกาบาตร่วงใส่จุด: " + targetPos + "</color>");
     }
 
     // --- Shield ---
@@ -282,5 +342,41 @@ public class PlayerCombat : MonoBehaviour
         }
 
         Debug.Log("<color=yellow>🛡️💥 สกิล Shield Bash! ดาเมจ 2.0x (เสีย Mana " + shieldSkillManaCost + ")</color>");
+
+    }
+    private Vector3 GetMouseGroundPosition()
+    {
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        Plane groundPlane = new Plane(Vector3.up, Vector3.zero); // ระนาบพื้นโลก
+
+        if (groundPlane.Raycast(ray, out float enter))
+        {
+            return ray.GetPoint(enter);
+        }
+
+        return transform.position + transform.forward * 5f; // สำรองกรณีเล็งหลุดจอ
+    }
+    // ฟังก์ชันค้นหาศัตรู (Boss/Enemy) ที่อยู่ใกล้ตัวผู้เล่นที่สุดในระยะ radius
+    private Transform GetClosestTarget(float radius)
+    {
+        Collider[] hitColliders = Physics.OverlapSphere(transform.position, radius);
+        Transform closest = null;
+        float minDistance = float.MaxValue;
+
+        foreach (var col in hitColliders)
+        {
+            // ตรวจจับวัตถุที่มี Tag Boss หรือ Enemy
+            if (col.CompareTag("Boss") || col.CompareTag("Enemy"))
+            {
+                float dist = Vector3.Distance(transform.position, col.transform.position);
+                if (dist < minDistance)
+                {
+                    minDistance = dist;
+                    closest = col.transform;
+                }
+            }
+        }
+
+        return closest;
     }
 }

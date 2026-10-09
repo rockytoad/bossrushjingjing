@@ -1,5 +1,5 @@
 using UnityEngine;
-using UnityEngine.AI; // ⚠️ เพิ่มไลบรารี NavMesh ตรงนี้ครับ
+using UnityEngine.AI; // ⚠️ ไลบรารีสำหรับใช้ NavMeshAgent
 
 public class BossAI : MonoBehaviour
 {
@@ -26,18 +26,17 @@ public class BossAI : MonoBehaviour
     private BossPhaseManager phaseManager;
     private float nextAttackTime;
 
-    // --- เปลี่ยนระบบเดินมาใช้ NavMeshAgent ---
+    // --- Component References ---
     private NavMeshAgent agent;
     private CharacterStatus playerStatus;
+    private BossSkills bossSkills; // 👈 1. ประกาศตัวแปร bossSkills ตรงนี้แล้ว
 
     void Start()
     {
         phaseManager = GetComponent<BossPhaseManager>();
-
-        // 1. ดึง NavMeshAgent จากตัวบอส
         agent = GetComponent<NavMeshAgent>();
+        bossSkills = GetComponent<BossSkills>(); // 👈 2. ดึง Component BossSkills จากตัวบอส
 
-        // 2. ตั้งค่าระยะหยุดเดินตามที่ตั้งไว้ใน Inspector
         if (agent != null)
         {
             agent.stoppingDistance = stopDistance;
@@ -51,6 +50,14 @@ public class BossAI : MonoBehaviour
 
     void Update()
     {
+        // 👈 3. เช็กว่าบอสกำลังรำท่า / ชาร์จสกิลอยู่หรือไม่ (ใช้ b ตัวเล็ก)
+        if (bossSkills != null && bossSkills.isExecutingSkill)
+        {
+            agent.isStopped = true;       // สั่งให้ NavMeshAgent หยุดเดินทันที
+            agent.velocity = Vector3.zero; // ล้างความเร็วตกค้างกันบอสไถล
+            return;                       // ตัดการทำงาน ไม่ให้รันโค้ดเดินตามด้านล่าง
+        }
+
         if (player == null || agent == null) return;
 
         int currentPhase = (phaseManager != null) ? phaseManager.currentPhase : 1;
@@ -59,10 +66,7 @@ public class BossAI : MonoBehaviour
         if (currentPhase == 3)
         {
             agent.isStopped = true; // สั่งหยุดเดิน NavMesh
-
-            // หันหน้าหา Player
             LookAtPlayer();
-
             HandleAttackLogic(3);
             return;
         }
@@ -84,7 +88,6 @@ public class BossAI : MonoBehaviour
         }
     }
 
-    // ฟังก์ชันช่วยหันหน้าหา Player
     void LookAtPlayer()
     {
         Vector3 direction = player.position - transform.position;
@@ -117,26 +120,38 @@ public class BossAI : MonoBehaviour
 
         if (phase == 1)
         {
-            Debug.Log("<color=white>Boss: [Phase 1] ตบเบาๆ แปะ!</color>");
-            if (playerStatus != null) playerStatus.TakeDamage(p1Damage);
+            Debug.Log("<color=white>Boss: [Phase 1] Bite Attack!</color>");
+            if (bossSkills != null) StartCoroutine(bossSkills.Bite(p1Damage));
         }
         else if (phase == 2)
         {
             if (randomValCheck() < p2SpecialChance)
             {
-                Debug.Log("<color=orange>Boss: [Phase 2] สุ่มใช้สกิลพิเศษ!!</color>");
-                if (playerStatus != null) playerStatus.TakeDamage(p2SpecialDamage);
+                Debug.Log("<color=orange>Boss: [Phase 2] สุ่มใช้ Rushing / Slam!</color>");
+                if (bossSkills != null)
+                {
+                    if (Random.value > 0.5f)
+                        StartCoroutine(bossSkills.Rushing(12f, p2SpecialDamage));
+                    else
+                        StartCoroutine(bossSkills.Slam(p2SpecialDamage));
+                }
             }
             else
             {
-                Debug.Log("<color=yellow>Boss: [Phase 2] ตบหนัก!</color>");
-                if (playerStatus != null) playerStatus.TakeDamage(p2NormalDamage);
+                Debug.Log("<color=yellow>Boss: [Phase 2] Bite!</color>");
+                if (bossSkills != null) StartCoroutine(bossSkills.Bite(p2NormalDamage));
             }
         }
         else if (phase == 3)
         {
-            Debug.Log("<color=red>Boss: [Phase 3] สาดสกิลรัวๆ!</color>");
-            if (playerStatus != null) playerStatus.TakeDamage(p3SkillDamage);
+            Debug.Log("<color=red>Boss: [Phase 3] สาดสกิล Phase 3!</color>");
+            if (bossSkills != null)
+            {
+                float rand = Random.value;
+                if (rand < 0.33f) StartCoroutine(bossSkills.Jellythrust(p3SkillDamage));
+                else if (rand < 0.66f) StartCoroutine(bossSkills.TentacleslamV1(p3SkillDamage));
+                else StartCoroutine(bossSkills.TentacleslamV2(p3SkillDamage));
+            }
         }
     }
 
